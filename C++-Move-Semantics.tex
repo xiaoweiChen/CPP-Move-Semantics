@@ -1,0 +1,348 @@
+
+\documentclass[11pt,a4paper,UTF8]{ctexart}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{authblk}
+
+\usepackage{ctex} %导入中文包
+\usepackage{tocvsec2}
+
+\usepackage{tabularx}
+\usepackage{booktabs} 
+\usepackage{multirow}
+\usepackage{bbding}
+\usepackage{float}
+
+\usepackage{graphicx}
+\usepackage{subfigure}
+
+\usepackage{subfiles} %使用多文件方式进行
+
+\usepackage{geometry} %设置页边距的包
+\geometry{left=2.5cm,right=2cm,top=2.54cm,bottom=2.54cm} %设置书籍的页边距
+
+\usepackage{hyperref}  %制作pdf的目录
+\hypersetup{hidelinks, %去红框
+	colorlinks=true,
+	allcolors=black,
+	pdfstartview=Fit,
+	breaklinks=true
+}
+
+% 调整itemlist中的行间距
+\usepackage{enumitem}
+\setenumerate[1]{itemsep=0pt,partopsep=0pt,parsep=\parskip,topsep=5pt}
+\setitemize[1]{itemsep=0pt,partopsep=0pt,parsep=\parskip,topsep=5pt}
+\setdescription{itemsep=0pt,partopsep=0pt,parsep=\parskip,topsep=5pt}
+
+% 超链接样式设置
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=blue,
+	filecolor=blue,
+	urlcolor=blue,
+	citecolor=cyan,
+}
+
+\usepackage{indentfirst}
+
+\usepackage{listings}
+\usepackage[usenames,dvipsnames,svgnames, x11names]{xcolor}
+
+\usepackage{tcolorbox}
+
+%展示代码
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\lstset{
+	backgroundcolor=\color{blue!3!white}, 
+	basicstyle = \footnotesize,       
+	breakatwhitespace = false,        
+	breaklines = true,                 
+	captionpos = b,                    
+	commentstyle = \color{mygreen}\bfseries,
+	extendedchars = false,             
+	frame =shadowbox, 
+	framerule=0.5pt,
+	keepspaces=true,
+	keywordstyle=\color{blue}\bfseries, % keyword style
+	language = C++,                     % the language of code
+	otherkeywords={string}, 
+	numbers=left, 
+	numbersep=5pt,
+	numberstyle=\tiny\color{mygray},
+	rulecolor=\color{black},         
+	showspaces=false,  
+	showstringspaces=false, 
+	showtabs=false,    
+	stepnumber=1,         
+	stringstyle=\color{mymauve},        % string literal style
+	tabsize=2,          
+	title=\lstname                      
+}
+
+\begin{document}
+	%\maketitle
+	
+	\begin{center}
+		\includegraphics[width=1.\textwidth]{cover}
+		\newpage
+		\huge
+		\textbf{C++ Move Semantics} 
+		\\[9pt]
+		\normalsize
+		The Complete Guide
+		\\[10pt]
+		\normalsize 
+		作者: Nicolai M. Josuttis
+		\\[8pt]
+		\normalsize
+		译者；陈晓伟
+	\end{center}
+	
+	\hspace*{\fill} \\ %插入空行
+	\noindent\textbf{本书概述}\ \par
+
+	完整的介绍C++ Move语义。\par
+	
+	C++11添加的Move语义已经成为现代C++的标志，也使语言变得复杂，即使经验丰富的开发者仍在需要仔细处理Move语义的细节。因为这个原因，一些编程书籍甚至不推荐对非常简单的类使用Move语义。所以，详细的解释C++ Move语义就变得刻不容缓。\par
+	
+	本书会从基本原理开始来介绍Move语义，并会解释Move语义的所有细节，使每个开发者都可以正确地使用Move语义。\par
+	
+	本书项目始于2019年，对于完全支持C++和数据并行的需要大量的扩展，超出当时的SYCL 1.2.1标准。DPC++编译器需要支持这些扩展，包括对统一共享内存(USM)的支持、通过SYCL完成三级层次结构的子工作组、匿名Lambda和许多编程简化。\par
+	
+	你将学习到：\par
+	
+	\begin{itemize}
+		\item Move语义的起因和术语
+		\item 如何隐式地获益于Move语义
+		\item 如何明确地获益于Move语义
+		\item 会遇到的所有问题，以及如何处理它们
+		\item 所有的结果都取决于你的编程风格
+	\end{itemize}
+	
+	重点在于所描述的特性，需要在实践中进行应用。示例和背景信息，有助于理解和改进简单类，甚至泛型库和框架的代码。\par
+	
+	“我以为我理解了Move的语义，但我真的不懂!”我从你的书中学到了很多东西。”	-- Jonathan Boccara\par
+	
+	“这是我需要很久的书。” -- Rob Bernstein\par
+	
+	“有时候我觉得我对纠缠和量子隐形传态的理解，要比我对一些奇怪的C++ Move语义的理解要好。套用Feynman的话：如果你认为你理解了C++的Move语义，那你就不理解C++的Move语义。赶快阅读这本书吧。”	-- Victor Ciura\par
+	
+	
+	\hspace*{\fill} \\ %插入空行
+	\noindent\textbf{作者简介}\ \par
+	Nicolai Josuttis (http://www.josuttis.com)在编程界很有名，因为他的发言和著作都很有权威，还是世界范围内畅销书的(共同)作者：\par
+	
+	\begin{itemize}
+		\item 《The C++ Standard Library》
+		\item 《C++ Templates》
+		\item 《C++ Move Semantics》
+		\item 《C++17》
+		\item 《SOA in Practice》
+	\end{itemize}
+	
+	同时也是一位富有创新精神的演讲者，曾在各种会议和活动中发言。还是独立的讲师，并且在C++标准化方面有20多年的经验。\par
+	
+	\hspace*{\fill} \\ %插入空行
+	\noindent\textbf{本书相关}\ \par
+	\begin{itemize}
+		\item github翻译地址：\href{https://github.com/xiaoweiChen/CPP-Move-Semantics}{https://github.com/xiaoweiChen/CPP-Move-Semantics}
+	\end{itemize}
+	\newpage
+	
+	\tableofcontents
+	\newpage
+	
+	%前言和关于本书
+	\pagestyle{empty}
+	%\subfile{content/preface.tex}
+
+	\setsecnumdepth{section}
+	\section{Part I: Basic Features of Move Semantics}
+	\subsection{The Power of Move Semantics}
+	%\subfile{content/chapter-1/1-0.tex}
+		\subsubsection{Motivation for Move Semantics}
+		%\subfile{content/chapter-1/1-1.tex}
+		\subsubsection{Implementing Move Semantics}
+		%\subfile{content/chapter-1/1-2.tex}
+		\subsubsection{Copying as a Fallback}
+		%\subfile{content/chapter-1/1-3.tex}
+		\subsubsection{Move Semantics for const Objects}
+		%\subfile{content/chapter-1/1-4.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-1/1-10.tex}
+	\subsection{Core Features of Move Semantics}
+	%\subfile{content/chapter-2/2-0.tex}
+		\subsubsection{Rvalue References}
+		%\subfile{content/chapter-2/2-1.tex}
+		\subsubsection{std::move()}
+		%\subfile{content/chapter-2/2-2.tex}
+		\subsubsection{Moved-From Objects}
+		%\subfile{content/chapter-2/2-3.tex}
+		\subsubsection{Overloading by Different References}
+		%\subfile{content/chapter-2/2-4.tex}
+		\subsubsection{Passing by Value}
+		%\subfile{content/chapter-2/2-4.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-2/2-10.tex}
+	\subsection{Move Semantics in Classes}
+	%\subfile{content/chapter-3/3-0.tex}
+		\subsubsection{Move Semantics in Ordinary Classes}
+		%\subfile{content/chapter-3/3-1.tex}
+		\subsubsection{Implementing Special Copy/Move Member Functions}
+		%\subfile{content/chapter-3/3-2.tex}
+		\subsubsection{Rules for Special Member Functions}
+		%\subfile{content/chapter-3/3-4.tex}
+		\subsubsection{The Rule of Five or Three}
+		%\subfile{content/chapter-3/3-5.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-3/3-12.tex}
+	\subsection{How to Benefit From Move Semantics}
+	%\subfile{content/chapter-4/4-0.tex}
+		\subsubsection{Avoid Objects with Names}
+		%\subfile{content/chapter-4/4-1.tex}
+		\subsubsection{Avoid Unnecessary std::move()}
+		%\subfile{content/chapter-4/4-2.tex}
+		\subsubsection{Initialize Members with Move Semantics}
+		%\subfile{content/chapter-4/4-3.tex}
+		\subsubsection{Move Semantics in Class Hierarchies}
+		%\subfile{content/chapter-4/4-4.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-4/4-8.tex}
+	\subsection{Overloading on Reference Qualifiers}
+	%\subfile{content/chapter-5/5-0.tex}
+		\subsubsection{Return Type of Getters}
+		%\subfile{content/chapter-5/5-1.tex}
+		\subsubsection{Overloading on Qualifiers}
+		%\subfile{content/chapter-5/5-2.tex}
+		\subsubsection{When to Use Reference Qualifiers}
+		%\subfile{content/chapter-5/5-3.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-5/5-6.tex}
+	\subsection{Moved-From States}
+	%\subfile{content/chapter-6/6-0.tex}
+		\subsubsection{Required and Guaranteed States of Moved-From Objects}
+		%\subfile{content/chapter-6/6-1.tex}
+		\subsubsection{Destructible and Assignable}
+		%\subfile{content/chapter-6/6-2.tex}
+		\subsubsection{Dealing with Broken Invariants}
+		%\subfile{content/chapter-6/6-3.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-6/6-6.tex}
+	\subsection{Move Semantics and noexcept}
+	%\subfile{content/chapter-7/7-0.tex}
+		\subsubsection{Move Constructors with and without noexcept}
+		%\subfile{content/chapter-7/7-1.tex}
+		\subsubsection{Details of noexcept Declarations}
+		%\subfile{content/chapter-7/7-2.tex}
+		\subsubsection{noexcept Declarations in Class Hierarchies}
+		%\subfile{content/chapter-7/7-2.tex}
+		\subsubsection{When and Where to Use noexcept}
+		%\subfile{content/chapter-7/7-2.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-7/7-3.tex}
+	\subsection{Value Categories}
+	%\subfile{content/chapter-8/8-0.tex}
+		\subsubsection{Value Categories}
+		%\subfile{content/chapter-8/8-1.tex}
+		\subsection{Special Rules for Value Categories}
+		%\subsubsection{content/chapter-8/8-2.tex}
+		\subsubsection{Impact of Value Categories When Binding References}
+		%\subfile{content/chapter-8/8-3.tex}
+		\subsubsection{When Lvalues become Rvalues}
+		%\subfile{content/chapter-8/8-4.tex}
+		\subsubsection{When Rvalues become Lvalues}
+		%\subfile{content/chapter-8/8-4.tex}
+		\subsubsection{Checking Value Categories with decltype}
+		%\subfile{content/chapter-8/8-4.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-8/8-5.tex}
+		
+	\section{Part II: Move Semantics in Generic Code}
+	\subsection{Perfect Forwarding}
+	%\subfile{content/chapter-9/9-0.tex}
+		\subsubsection{Motivation for Perfect Forwarding}
+		%\subfile{content/chapter-9/9-1.tex}
+		\subsubsection{Implementing Perfect Forwarding}
+		%\subfile{content/chapter-9/9-2.tex}
+		\subsubsection{Rvalue References versus Universal References}
+		%\subfile{content/chapter-9/9-3.tex}
+		\subsubsection{Overload Resolution with Universal References}
+		%\subfile{content/chapter-9/9-4.tex}
+		\subsubsection{Perfect Forwarding in Lambdas}
+		%\subfile{content/chapter-9/9-5.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-9/9-6.tex}
+	\subsection{Tricky Details of Perfect Forwarding}
+	%\subfile{content/chapter-10/10-0.tex}
+		\subsubsection{Universal References as Non-Forwarding References}
+		%\subfile{content/chapter-10/10-1.tex}
+		\subsubsection{Universal or Ordinary Rvalue Reference?}
+		%\subfile{content/chapter-10/10-2.tex}
+		\subsubsection{How the Standard Specifies Perfect Forwarding}
+		%\subfile{content/chapter-10/10-3.tex}
+		\subsubsection{Nasty Details of Perfect Forwarding}
+		%\subfile{content/chapter-10/10-5.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-10/10-6.tex}
+	\subsection{Perfect Passing with auto\&\&}
+	%\subfile{content/chapter-11/11-0.tex}
+		\subsubsection{Default Perfect Passing}
+		%\subfile{content/chapter-11/11-1.tex}
+		\subsubsection{Universal References with auto\&\&}
+		%\subfile{content/chapter-11/11-2.tex}
+		\subsubsection{auto\&\& as Non-Forwarding Reference}
+		%\subfile{content/chapter-11/11-3.tex}
+		\subsubsection{Perfect Forwarding in Lambdas}
+		%\subfile{content/chapter-11/11-4.tex}
+		\subsubsection{Using auto\&\& in C++20 Function Declarations}
+		%\subfile{content/chapter-11/11-5.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-11/11-6.tex}
+	\subsection{Perfect Returning with decltype(auto)}
+	%\subfile{content/chapter-12/12-0.tex}
+		\subsubsection{Perfect Returning}
+		%\subfile{content/chapter-12/12-1.tex}
+		\subsubsection{decltype(auto)}
+		%\subfile{content/chapter-12/12-2.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-12/12-8.tex}
+		
+	\section{Part III: Move Semantics in the C++ Standard Library}
+	\subsection{Move-Only Types}
+	%\subfile{content/chapter-13/13-0.tex}
+		\subsubsection{Declaring and Using Move-Only Types}
+		%\subfile{content/chapter-13/13-1.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-13/13-10.tex}
+	\subsection{Moving Algorithms and Iterators}
+	%\subfile{content/chapter-14/14-0.tex}
+		\subsubsection{Moving Algorithms}
+		%\subfile{content/chapter-15/15-1.tex}
+		\subsubsection{Removing Algorithms}
+		%\subfile{content/chapter-15/15-2.tex}
+		\subsubsection{Move Iterators}
+		%\subfile{content/chapter-15/15-3.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-15/15-5.tex}
+	\subsection{Move Semantics in Types of the C++ Standard Library}
+	%\subfile{content/chapter-15/0.tex}
+		\subsubsection{Move Semantics for Strings}
+		%\subfile{content/chapter-15/1.tex}
+		\subsubsection{Move Semantics for Containers}
+		%\subfile{content/chapter-15/2.tex}
+		\subsubsection{Move Semantics for Vocabulary Types}
+		%\subfile{content/chapter-15/3.tex}
+		\subsubsection{Move Semantics for Smart Pointers}
+		%\subfile{content/chapter-15/4.tex}
+		\subsubsection{Move Semantics for IOStreams}
+		%\subfile{content/chapter-15/5.tex}
+		\subsubsection{Move Semantics for Multithreading}
+		%\subfile{content/chapter-15/6.tex}
+		\subsubsection{总结}
+		%\subfile{content/chapter-15/6.tex}
+\end{document}
