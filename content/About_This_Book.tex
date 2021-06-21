@@ -1,0 +1,143 @@
+\begin{flushright}
+	\zihao{0} About This Book
+\end{flushright}
+
+This book teaches C++ move semantics. Starting from the basic principles, it motivates and explains all features and corner cases of move semantics so that as a programmer, you can understand and use move semantics correctly. The book is valuable for those who are just starting to learn about move semantics and
+is essential for those who are using it already.\par
+
+As usual for my books, the focus lies on the application of the new features in practice and the book will demonstrate how features impact day-to-day programming and how you can benefit from them in projects. This applies to both application programmers and programmers who provide generic frameworks and foundation libraries.\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{What You Should Know Before Reading This Book}
+
+To get the most from this book, you should already be familiar with C++. You should be familiar with the concepts of classes and references in general, and you should be able to write C++ programs using components such as IOStreams and containers from the C++ standard library. You should also be familiar with the basic features of “Modern C++,” such as auto or the range-based for loop.\par
+
+However, you do not have to be an expert. My goal is to make the content understandable for the average C++ programmer who does not necessarily know all the details of the latest features. I will discuss basic features and review more subtle issues as the need arises.\par
+
+This ensures that the text is accessible to experts and intermediate programmers alike.\par
+
+
+\hspace*{\fill} \par %插入空行
+\textbf{Overall Structure of the Book}
+
+This book covers all aspects of C++ move semantics up to C++20. This applies to both language and library features as well as both features that affect day-to-day application programming and features for the sophisticated implementation of (foundation) libraries. However, the more general cases and examples usually come first.\par
+
+The different chapters are grouped, so that didactically you should read the book from beginning to end. That is, later chapters usually rely on features introduced in earlier chapters. However, cross-references also help in specific subsequent topics, indicating where they refer to features and aspects introduced earlier.\par
+
+The book therefore contains the following parts:\par
+\begin{itemize}
+	\item \textbf{Part I} covers the basic features of move semantics (especially for non-generic code).
+	\item \textbf{Part II} covers the features of move semantics for generic code (especially used in templates and generic lambdas).
+	\item \textbf{Part III} covers the use of move semantics in the C++ standard library (giving also a good example of how to use move semantics in practice).
+\end{itemize}
+
+
+\hspace*{\fill} \par %插入空行
+\textbf{How to Read This Book}
+
+Do not be afraid by the number of pages in this book. As always with C++, things can become pretty complicated when you look into details (such as implementing templates). For a basic understanding, the first third of the book (Part I, especially chapters 1 to 5) is sufficient.\par
+
+In my experience, the best way to learn something new is to look at examples. Therefore, you will find a lot of examples throughout the book. Some are just a few lines of code illustrating an abstract concept, whereas others are complete programs that provide a concrete application of the material. The latter kind of examples will be introduced by a C++ comment describing the file containing the program code. You can find these files on the website for this book at http://www.cppmove.com.\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{The Way I Implement}
+
+Note the following hints about the way I write code and comments.\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{Initializations}
+
+I usually use the modern form of initialization (introduced in C++11 as uniform initialization) with curly braces:\par
+\begin{lstlisting}[caption={}]
+int i{42};
+std::string s{"hello"};
+\end{lstlisting}
+
+This form of initialization, which is called brace initialization, has the following advantages: \par
+\begin{itemize}
+	\item It can be used with fundamental types, class types, aggregates, enumeration types, and auto
+	\item It can be used to initialize containers with multiple values
+	\item It can detect narrowing errors (e.g., initialization of an int by a floating-point value)
+	\item It cannot be confused with function declarations or calls
+\end{itemize}
+
+If the braces are empty, the default constructors of (sub)objects are called and fundamental data types are guaranteed to be initialized with 0/false/nullptr.\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{Error Terminology}
+
+I often talk about programming errors. If there is no special hint, the term error or a comment such as\par
+\begin{lstlisting}[caption={}]
+... // ERROR
+\end{lstlisting}
+means a compile-time error. The corresponding code should not compile (with a conforming compiler).\par
+
+If I use the term runtime error, the program might compile but not behave correctly or result in undefined behavior (thus, it might or might not do what is expected).\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{Code Simplifications}
+
+I try to explain all features with helpful examples. However, to concentrate on the key aspects to be taught, I might often skip other details that should be part of code.\par
+
+\begin{itemize}
+	\item Most of the time I use an ellipsis (“...”) to signal additional code that is missing. Note that I do not use code font here. If you see an ellipsis with code font, code must have these three dots as a language feature (such as for “typename...”).
+	\item In header files I usually skip the preprocessor guards. All header files should have something like the following:
+	\begin{lstlisting}[caption={}]
+	#ifndef MYFILE_HPP
+	#define MYFILE_HPP
+	...
+	#endif // MYFILE_HPP
+	\end{lstlisting}
+	So, please beware and fix the code when using these header files in your projects.
+\end{itemize}
+
+\hspace*{\fill} \par %插入空行
+\textbf{The C++ Standards}
+
+C++ has different versions defined by different C++ standards.\par
+
+The original C++ standard was published in 1998 and was subsequently amended by a technical corrigendum in 2003, which provided minor corrections and clarifications to the original standard. This “old C++ standard” is known as C++98 or C++03.\par
+
+The world of “Modern C++” began with C++11 and was extended with C++14 and C++17. The international C++ standards committee now aims to issue a new standard every three years. Clearly, that leaves less time for massive additions, but it brings the changes to the broader programming community more quickly.\par
+
+The development of larger features, therefore, takes time and might cover multiple standards. The next “Even more Modern C++” is already on the horizon, as introduced with C++20. Again, several ways to program will probably change. However, as usual, compilers need some time to provide the latest language features. At the time of writing this book, C++17 is usually the latest version supported by major compilers.\par
+
+Fortunately, the basic principles of move semantics were all introduced with C++11 and C++14. For that reason, the code examples in this book should usually compile on recent versions of all major compilers. If special features introduced with C++17 or C++20 are discussed, I will mention that explicitly.\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{Example Code and Additional Information}
+
+You can access all example programs and find more information about this book from its website, which has the following URL: http://www.cppmove.com\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{Feedback}
+
+I welcome your constructive input—both negative and positive. I have worked very hard to bring you what I hope you will find to be an excellent book. However, at some point I had to stop writing, reviewing, and tweaking to “release the new revision.” You may therefore find errors, inconsistencies, presentations that could be improved, or topics that are missing altogether. Your feedback gives me a chance to fix these issues, inform all readers about the changes through the book’s website, and improve any subsequent revisions or editions.\par
+
+The best way to reach me is by email. You will find the email address at the website for this book:http://www.cppmove.com\par
+
+If you use the ebook, you might want to ensure to have the latest version of this book available (remember it is written and published incrementally). You should also check the book’s Web site for the currently known errata before submitting reports. In any case, refer to the publishing date of this version when giving feedback. The current publishing date is 2020-12-19 (you can also find it on page ii, the page directly after the cover).\par
+
+Many thanks.\par
+
+\newpage
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
