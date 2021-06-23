@@ -1,124 +1,123 @@
 \begin{flushright}
-	\zihao{0} About This Book
+	\zihao{0} 关于本书
 \end{flushright}
 
-This book teaches C++ move semantics. Starting from the basic principles, it motivates and explains all features and corner cases of move semantics so that as a programmer, you can understand and use move semantics correctly. The book is valuable for those who are just starting to learn about move semantics and
-is essential for those who are using it already.\par
+这本书详解C++的Move语义。从基本原理出发，解释了Move语义的所有特性和案例，这样就可以正确地理解和使用Move语义。\par
 
-As usual for my books, the focus lies on the application of the new features in practice and the book will demonstrate how features impact day-to-day programming and how you can benefit from them in projects. This applies to both application programmers and programmers who provide generic frameworks and foundation libraries.\par
-
-\hspace*{\fill} \par %插入空行
-\textbf{What You Should Know Before Reading This Book}
-
-To get the most from this book, you should already be familiar with C++. You should be familiar with the concepts of classes and references in general, and you should be able to write C++ programs using components such as IOStreams and containers from the C++ standard library. You should also be familiar with the basic features of “Modern C++,” such as auto or the range-based for loop.\par
-
-However, you do not have to be an expert. My goal is to make the content understandable for the average C++ programmer who does not necessarily know all the details of the latest features. I will discuss basic features and review more subtle issues as the need arises.\par
-
-This ensures that the text is accessible to experts and intermediate programmers alike.\par
-
+和我的其他书一样，重点在于所描述的特性，需要在实践中进行应用。示例和背景信息，有助于理解和改进简单类，甚至泛型库和框架的代码。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{Overall Structure of the Book}
+\textbf{阅前须知}
 
-This book covers all aspects of C++ move semantics up to C++20. This applies to both language and library features as well as both features that affect day-to-day application programming and features for the sophisticated implementation of (foundation) libraries. However, the more general cases and examples usually come first.\par
+您应该已经熟悉C++，应该熟悉类和引用的一般概念，并且应该能使用C++标准库的iostream和容器等组件来编写C++程序。还应该熟悉“现代C++”的基本特性，比如：atuo或基于范围的for循环。\par
 
-The different chapters are grouped, so that didactically you should read the book from beginning to end. That is, later chapters usually rely on features introduced in earlier chapters. However, cross-references also help in specific subsequent topics, indicating where they refer to features and aspects introduced earlier.\par
+你不必是专家。我的目标是让普通C++程序员能够理解这些内容，他们不一定知道最新特性的所有细节。我将讨论基本特性，并在需要时回顾更细节的问题。\par
 
-The book therefore contains the following parts:\par
+这也确保了专家和中级程序员都也可以阅读本书。\par
+
+
+\hspace*{\fill} \par %插入空行
+\textbf{本书结构}
+
+这本书涵盖了C++的Move语义，以及C++20的各个方面。这既适用于语言和库特性，也适用于日常应用程序编程的特性和(基础)库复杂实现的特性。\par
+
+不同的章节是分组的，所以应该从头读到尾。也就是说，后面的章节通常依赖于前面章节介绍的特性。但是，交叉引用在特定的后续主题中也有帮助，并且会指出在何处引用前面介绍的特性。\par
+
+本书包含以下部分:\par
 \begin{itemize}
-	\item \textbf{Part I} covers the basic features of move semantics (especially for non-generic code).
-	\item \textbf{Part II} covers the features of move semantics for generic code (especially used in templates and generic lambdas).
-	\item \textbf{Part III} covers the use of move semantics in the C++ standard library (giving also a good example of how to use move semantics in practice).
+	\item \textbf{Part I}介绍了Move语义的基本特性(特别是非泛型代码)。
+	\item \textbf{Part II}介绍了泛型代码(特别是在模板和泛型Lambda中使用的)的Move语义的特性。
+	\item \textbf{Part III}包含在C++标准库中Move语义的使用(也给出了一个在实践中如何使用Move语义的例子)。
 \end{itemize}
 
 
 \hspace*{\fill} \par %插入空行
-\textbf{How to Read This Book}
+\textbf{如何阅读}
 
-Do not be afraid by the number of pages in this book. As always with C++, things can become pretty complicated when you look into details (such as implementing templates). For a basic understanding, the first third of the book (Part I, especially chapters 1 to 5) is sufficient.\par
+不要畏惧这本书的页数。与C++一样，当你研究细节(比如实现模板)时，事情会变得非常复杂。对于基本的理解，本书的前三分之一(第一部分，特别是第1-5章)就足够了。\par
 
-In my experience, the best way to learn something new is to look at examples. Therefore, you will find a lot of examples throughout the book. Some are just a few lines of code illustrating an abstract concept, whereas others are complete programs that provide a concrete application of the material. The latter kind of examples will be introduced by a C++ comment describing the file containing the program code. You can find these files on the website for this book at http://www.cppmove.com.\par
-
-\hspace*{\fill} \par %插入空行
-\textbf{The Way I Implement}
-
-Note the following hints about the way I write code and comments.\par
+以我的经验，学习新东西的最好方法是看例子。因此，你会在书中找到很多例子。有些只是说明抽象概念的几行代码，有些会提供具体应用的完整程序。后一种示例将通过描述程序代码的文件的C++注释来介绍。你可以在这本书的网站http://www.cppmove.com上找到这些文件。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{Initializations}
+\textbf{实现方式}
 
-I usually use the modern form of initialization (introduced in C++11 as uniform initialization) with curly braces:\par
+关于我编写代码和注释的方式，请注意以下提示。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{初始化}
+
+我通常使用带大括号的现代初始化形式(C++11中引入的统一初始化):\par
 \begin{lstlisting}[caption={}]
 int i{42};
 std::string s{"hello"};
 \end{lstlisting}
 
-This form of initialization, which is called brace initialization, has the following advantages: \par
+这种形式的初始化称为大括号初始化，有以下优点:\par
 \begin{itemize}
-	\item It can be used with fundamental types, class types, aggregates, enumeration types, and auto
-	\item It can be used to initialize containers with multiple values
-	\item It can detect narrowing errors (e.g., initialization of an int by a floating-point value)
-	\item It cannot be confused with function declarations or calls
+	\item 可以与基本类型、类类型、聚合、枚举类型和auto一起使用
+	\item 可以用于初始化带有多个值的容器
+	\item 可以检测截断错误(例如，用浮点值初始化int)
+	\item 不能与函数声明或调用混淆
 \end{itemize}
 
-If the braces are empty, the default constructors of (sub)objects are called and fundamental data types are guaranteed to be initialized with 0/false/nullptr.\par
+如果大括号为空，则调用(子)对象的默认构造函数，并保证使用0/false/nullptr初始化基本数据类型。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{Error Terminology}
+\textbf{错误描述}
 
-I often talk about programming errors. If there is no special hint, the term error or a comment such as\par
+我会经常谈论编程错误。如果没有特殊提示，错误或注释为：\par
 \begin{lstlisting}[caption={}]
 ... // ERROR
 \end{lstlisting}
-means a compile-time error. The corresponding code should not compile (with a conforming compiler).\par
+表示编译时错误。对应的代码不应该编译(使用符合标准的编译器)。\par
 
-If I use the term runtime error, the program might compile but not behave correctly or result in undefined behavior (thus, it might or might not do what is expected).\par
+如果使用运行时错误，程序可能会编译，但不能正确运行或导致未定义的行为(因此，可能会或可能不会执行预期的操作)。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{Code Simplifications}
+\textbf{代码简化}
 
-I try to explain all features with helpful examples. However, to concentrate on the key aspects to be taught, I might often skip other details that should be part of code.\par
+我试图用有用的例子来解释所有的特征。然而，为了专注于关键方面，我可能经常会跳过一部分代码。\par
 
 \begin{itemize}
-	\item Most of the time I use an ellipsis (“...”) to signal additional code that is missing. Note that I do not use code font here. If you see an ellipsis with code font, code must have these three dots as a language feature (such as for “typename...”).
-	\item In header files I usually skip the preprocessor guards. All header files should have something like the following:
+	\item 大多数时候，我使用省略号(“…”)来表示其他代码。注意，我在这里没有使用代码字体。如果看到带有代码字体的省略号，那么代码必须有这三个点作为语言特性(例如“typename…”)。
+	\item 头文件中，我通常跳过预处理器保护。所有头文件应该有类似如下的内容:
 	\begin{lstlisting}[caption={}]
 	#ifndef MYFILE_HPP
 	#define MYFILE_HPP
 	...
 	#endif // MYFILE_HPP
 	\end{lstlisting}
-	So, please beware and fix the code when using these header files in your projects.
+	因此，在项目中使用这些头文件时，请注意并补全代码。
 \end{itemize}
 
 \hspace*{\fill} \par %插入空行
-\textbf{The C++ Standards}
+\textbf{C++标准}
 
-C++ has different versions defined by different C++ standards.\par
+不同的C++标准定义了不同的C++版本。\par
 
-The original C++ standard was published in 1998 and was subsequently amended by a technical corrigendum in 2003, which provided minor corrections and clarifications to the original standard. This “old C++ standard” is known as C++98 or C++03.\par
+最初的C++标准出版于1998年，随后在2003年通过勘误表进行了修订，对原来的标准进行了微小的修正。“旧C++标准”即为C++98或C++03标准。\par
 
-The world of “Modern C++” began with C++11 and was extended with C++14 and C++17. The international C++ standards committee now aims to issue a new standard every three years. Clearly, that leaves less time for massive additions, but it brings the changes to the broader programming community more quickly.\par
+“现代C++”始于C++11，并在C++14和C++17中扩展。国际C++标准委员会现在的目标是每三年发布一个新标准。显然，这就减少了进行大规模添加的时间，可以更快地为编程社区带来变化。\par
 
-The development of larger features, therefore, takes time and might cover multiple standards. The next “Even more Modern C++” is already on the horizon, as introduced with C++20. Again, several ways to program will probably change. However, as usual, compilers need some time to provide the latest language features. At the time of writing this book, C++17 is usually the latest version supported by major compilers.\par
+因此，开发更大的特性需要时间，而且可能涉及多个标准。下一个“更现代的C++”已经在地平线上，如C++20所介绍的那样。同样，编程的几种方式可能会改变，但编译器需要一些时间来提供最新的语言特性。在撰写本书时，C++17是主流编译器支持的最新版本。\par
 
-Fortunately, the basic principles of move semantics were all introduced with C++11 and C++14. For that reason, the code examples in this book should usually compile on recent versions of all major compilers. If special features introduced with C++17 or C++20 are discussed, I will mention that explicitly.\par
-
-\hspace*{\fill} \par %插入空行
-\textbf{Example Code and Additional Information}
-
-You can access all example programs and find more information about this book from its website, which has the following URL: http://www.cppmove.com\par
+幸运的是，在C++11和C++14中都介绍Move语义的基本原理。因此，本书中的代码示例，通常可以在主流编译器的最新版本上编译。如果讨论C++17或C++20引入的特殊特性，我会明确地提到。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{Feedback}
+\textbf{示例代码的信息}
 
-I welcome your constructive input—both negative and positive. I have worked very hard to bring you what I hope you will find to be an excellent book. However, at some point I had to stop writing, reviewing, and tweaking to “release the new revision.” You may therefore find errors, inconsistencies, presentations that could be improved, or topics that are missing altogether. Your feedback gives me a chance to fix these issues, inform all readers about the changes through the book’s website, and improve any subsequent revisions or editions.\par
+你可以访问所有的示例程序，并从它的网站上找到更多关于这本书的信息，它的网址如下:\\http://www.cppmove.com\par
 
-The best way to reach me is by email. You will find the email address at the website for this book:http://www.cppmove.com\par
+\hspace*{\fill} \par %插入空行
+\textbf{反馈}
 
-If you use the ebook, you might want to ensure to have the latest version of this book available (remember it is written and published incrementally). You should also check the book’s Web site for the currently known errata before submitting reports. In any case, refer to the publishing date of this version when giving feedback. The current publishing date is 2020-12-19 (you can also find it on page ii, the page directly after the cover).\par
+欢迎建设性意见，包括消极的和积极的。我已经非常努力了，希望你会发现这是一本优秀的书。然而，有时我停止写作、审查和调整，以便“发布新版本”。因此，你可能会发现错误、不一致、可以改进的示例或完全缺失的主题。你们的反馈给了我来解决这些问题的机会，通过这本书的网站告知所有读者这些变化，并改进任何后续的修订或版本。\par
 
-Many thanks.\par
+联系我最好的方式是通过电子邮件。你可以在这本书的网站上找到电子邮件地址:\\http://www.cppmove.com\par
+
+如果你使用电子书，你可能想要确保有这本书的最新版本(记住它是逐步编写和出版的)。在提交报告之前，您还应该检查该书的Web站点以获取当前已知的勘误表。无论如何，在反馈意见时，请参考本版本的发布日期。目前出版日期为2020年12月19日(也可以在第二页，封面后的下一页找到)。\par
+
+非常感谢！\par
 
 \newpage
 
