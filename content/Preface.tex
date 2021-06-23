@@ -2,42 +2,42 @@
 	\zihao{0} 前言
 \end{flushright}
 
-Move semantics, introduced with C++11, has become a hallmark of modern C++ programming. However, it also complicates the language in many ways. Even after several years of support, experienced programmers struggle with all the details of move semantics, style guides still recommend different consequences for programming even of trivial classes, and we still discuss semantic details in the C++ standards committee.\par
+C++11添加的Move语义已经成为现代C++的标志，也使语言变得复杂，即使经验丰富的开发者仍在需要仔细处理Move语义的细节。因为这个原因，一些编程书籍甚至不推荐对非常简单的类使用Move语义。所以，详细的解释C++ Move语义就变得刻不容缓。\par
 
-Whenever I have taught what I have learned about C++ move semantics so far, I have said, “Somebody has to write a book about all this,” and the usual answer was: “Yes, please do!” So, I finally did.\par
+目前为止，每当教授Move语义时，我都会说，“必须有人写一本关于Move的书，”通常的回答是:“那必须的的！你来写吧!”。现在，我终于做到了。\par
 
-As always when writing a book about C++, I was surprised about the number of aspects to be taught, the situations to be clarified, and the consequences to be described. It really was time to write a book about all aspects of move semantics, covering all C++ versions from C++11 up to C++20. I learned a lot and I am sure you will too. \par
-
-\hspace*{\fill} \par %插入空行
-\textbf{An Experiment}
-
-This book is an experiment in two ways:\par
-\begin{itemize}
-	\item I am writing an in-depth book covering a complex core language feature without the direct help of a core language expert as a co-author. However, I can ask questions and I do.
-	\item I am publishing the book myself on Leanpub and for printing on demand. That is, this book is written step by step and I will publish new versions as soon there is a significant improvement that makes the publication of a new version worthwhile.
-\end{itemize}
-
-The good thing is:\par
-\begin{itemize}
-	\item You get the view of the language features from an experienced application programmer—somebody who feels the pain a feature might cause and asks the relevant questions to be able to motivate and explain the	design and its consequences for programming in practice.
-	\item You can benefit from my experience with move semantics while I am still writing.
-	\item This book and all readers can benefit from your early feedback.
-\end{itemize}
-
-This means that you are also part of the experiment. So help me out: give feedback about flaws, errors, features that are not explained well, or gaps, so that we all can benefit from these improvements.\par
+和往常一样，写一本关于C++的书时，我都会对要介绍的知识、要阐明的情况和要描述的结果感到惊讶。是时候出一本关于Move语义的书了，要覆盖了从C++11到C++20的所有版本。我在这个过程中学到了很多，我相信你也一样。 \par
 
 \hspace*{\fill} \par %插入空行
-\textbf{Acknowledgments}
+\textbf{本书就是个实验}
 
-First of all, I would like to thank you, the C++ community, for making this book possible. The incredible design of all the features of move semantics, the helpful feedback, and their curiosity are the basis for the evolution of a successful language. In particular, thanks for all the issues you told me about and explained and for the feedback you gave.\par
+本书完成了实验的两个方面:\par
+\begin{itemize}
+	\item 写一本有深度的书，会涉及一个复杂的核心语言特性，但没有核心语言专家的直接帮助。不过，我可以问问题，我也这么做了。
+	\item 我自己在Leanpub上出版这本书，并按需印刷。这本书是逐步完成的，一旦有显著的改进，我将发布一个新版本。
+\end{itemize}
 
-I would especially like to thank everyone who reviewed drafts of this book or corresponding slides and provided valuable feedback and clarification. These reviews increased the quality of the book significantly, again proving that good things need the input of many “wise guys.” Therefore, so far (this list is still growing) huge thanks to Javier Estrada, Howard Hinnant, Klaus Iglberger, Daniel Kr¨ugler, Marc Mutz, Aleksandr Solovev (alexolut), Peter Sommerlad, and Tony Van Eerd.\par
+好的方面是:\par
+\begin{itemize}
+	\item 您可以从经验丰富的编程人员那里了解语言特性——他们体会到某个特性可能造成的痛苦，并提出相关问题，以便能够激励和解释设计，以及其在实践中编程的结果。
+	\item 当我还在写作时，您可以阅读我的Move语义经验，并从中获益。
+	\item 这本书和所有的读者都能从您的早期反馈中受益。
+\end{itemize}
 
-In addition, I would like to thank everyone in the C++ community and on the C++ standards committee.In addition to all the work involved in adding new language and library features, these experts spent many, many hours explaining and discussing their work with me, and they did so with patience and enthusiasm.\par
+这意味着你也是实验的一部分。所以，请帮助我:对本书的缺陷、错误、未解释清楚的功能或差距给予反馈，这样我们都能从这些改进中受益。\par
 
-Special thanks go to the LaTeX community for a great text system and to Frank Mittelbach for solving my \LaTeX\xspace issues (it was almost always my fault).\par
+\hspace*{\fill} \par %插入空行
+\textbf{致谢}
 
-And finally, many thanks go to my proofreader, Tracey Duffy, who has done a tremendous job of converting my “German English” into native English.\par
+首先，我要感谢C++社区，是你们使这本书成为可能。令人难以置信的Move语义的功能的设计，有用的反馈，和他们的好奇是语言进化的基础。特别感谢那些告诉我和解释的所有问题的人们，以及给我的反馈，谢谢你们。\par
+
+我要特别感谢每一个为这本书或审阅草稿并提供有价值的反馈和澄清的人。这些评论大大提高了这本书的质量，再次证明了好东西需要许多“聪明人”的投入。目前为止(这个列表还在增长)，感谢你们：Javier Estrada, Howard Hinnant, Klaus Iglberger, Daniel Kr ugler, Marc Mutz, Aleksandr Solovev (alexolut)， Peter Sommerlad和Tony Van Eerd。\par
+
+此外，我还要感谢C++社区和C++标准委员会的每一个人。除了所有涉及添加新语言和库功能的工作外，这些专家还花了很多很多的时间和我解释和讨论他们的工作，他们很有耐心，也很有热情。\par
+
+特别感谢LaTeX社区提供的文本系统，感谢Frank Mittelbach解决了我的 \LaTeX\xspace 问题。\par
+
+最后，非常感谢本书校对，Tracey Duffy，她做了大量的工作，把我的“德语英语”翻译成地道的英语。\par
 
 \newpage
 
