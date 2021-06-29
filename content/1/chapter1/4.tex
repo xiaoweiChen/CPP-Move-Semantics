@@ -1,0 +1,57 @@
+最后，不能移动用\textit{const}声明的对象。因为任何优化实现都要求可以修改传递的实参，如果不允许修改，就不能窃取。\par
+
+使用\textit{push\_back()}的重载:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+class vector {
+	public:
+	...
+	// insert a copy of elem:
+	void push_back (const T& elem);
+	// insert elem when the value of elem is no longer needed:
+	void push_back (T&& elem);
+	...
+};
+\end{lstlisting}
+
+对\textit{const}对象使用的函数是具有\textit{const\&}形参的\textit{push\_back()}重载:\par
+
+\begin{lstlisting}[caption={}]
+std::vector<std::string> coll;
+const std::string s{"data"};
+...
+coll.push_back(std::move(s)); // OK, calls push_back(const std::string&)
+\end{lstlisting}
+
+\textit{const}对象的\textit{std::move()}没起作用。\par
+
+原则上，可以通过声明带有\textit{const}右值引用的函数进行重载，但在语义上没有意义。同样，\textit{const}左值引用方式会作为处理这种情况的备选。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{const返回值}
+
+\textit{const}禁用移动语义对声明返回类型也有影响。\textit{const}返回值不能移动。\par
+
+因此，从C++11开始，用\textit{const}返回值就不再是好的方式了(正如过去的一些风格指南所推荐的那样)。例如:\par
+
+\begin{lstlisting}[caption={}]
+const std::string getValue();
+
+std::vector<std::string> coll;
+...
+coll.push_back(getValue()); // copies (because the return value is const)
+\end{lstlisting}
+
+当按值返回时，不要将整个返回值声明为\textit{const}。仅在声明部分返回类型时使用\textit{const}(例如：返回的引用或指针所指向的对象):\par
+
+\begin{lstlisting}[caption={}]
+const std::string getValue(); // BAD: disables move semantics for return values
+const std::string& getRef(); // OK
+const std::string* getPtr(); // OK
+\end{lstlisting}
+
+
+
+
+
