@@ -1,0 +1,43 @@
+可以通过移动语义，移动临时对象或用\textit{std::move()}标记的对象，可以通过“窃取”源值来优化值的复制(采用非const右值引用)。但是，如果没有针对移动语义的优化版本，则使用复制。\par
+
+例如，像\textit{vector}这样的容器类缺少\textit{push\_back()}的重载:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+class MyVector {
+	public:
+	...
+	void push_back (const T& elem); // insert a copy of elem
+	... // no other push_back() declared
+};
+\end{lstlisting}
+	
+仍然可以传递一个临时对象或使用\textit{std::move()}:\par
+
+\begin{lstlisting}[caption={}]
+MyVector<std::string> coll;
+std::string s{"data"};
+...
+coll.push_back(std::move(s)); // OK, uses copy semantics
+\end{lstlisting}	
+	
+对于临时对象或使用std::move()的对象，首选是将形参声明为右值引用的函数。如果不存在这样的函数，则使用复制语义。这样，就可以确保调用者不需要知道是否存在优化。优化有可能没有，因为:\par
+	
+\begin{itemize}
+	\item 函数/类是在移动语义支持前实现，或者没有考虑支持移动语义
+	\item 没有什么需要优化的(只有数字成员的类就是一个例子)
+\end{itemize}
+	
+对于泛型代码，如果不再需要一个对象的值，可以用\textit{std::move()}。即使没有移动语义的支持，相应的代码也会编译通过。\par
+	
+出于同样的原因，甚至可以用\textit{std::move()}来标记基本数据类型的对象，如int(或指针)。仍然会使用复制的值(地址)方式:\par
+	
+\begin{lstlisting}[caption={}]
+std::vector<int> coll;
+int x{42};
+...
+coll.push_back(std::move(x)); // OK, but copies x (std::move() has no effect)
+\end{lstlisting}
+	
+	
+	
