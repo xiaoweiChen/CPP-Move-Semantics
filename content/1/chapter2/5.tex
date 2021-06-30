@@ -1,0 +1,58 @@
+当声明一个函数以值作为参数，也可以(自动)使用移动语义。\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+void foo(std::string str); // takes the object by value
+...
+std::string s{"hello"};
+...
+foo(s); // calls foo(), str becomes a copy of s
+foo(std::move(s)); // calls foo(), s is moved to str
+foo(returnStringByValue()); // calls foo(), return value is moved to str
+\end{lstlisting}
+
+如果调用者发出信号表示它不再需要传递的实参的值(通过\textit{std::move()}或传递一个没有名称的临时对象)，形参str将用从传递的实参中窃取值进行初始化。\par
+
+这意味着，如果使用移动语义传递了一个临时对象或传递的参数标记为\textit{std::move()}，那么按值调用会突然变得便利起来。就像按值返回本地对象一样，这个移动也可以优化掉。但是，如果没有优化掉，那么这个调用现在肯定是高效的(如果有更高效的移动语义实现的话)。\par
+
+注意以下差异:\par
+
+\begin{lstlisting}[caption={}]
+void fooByVal(std::string str); // takes the object by value
+void fooByRRef(std::string&& str); // takes the object by rvalue reference
+...
+std::string s1{"hello"}, s2{"hello"};
+...
+fooByVal(std::move(s1)); // s1 is moved
+fooByRRef(std::move(s2)); // s2 might be moved
+\end{lstlisting}
+
+这里，我们比较两个函数:一个以值作为字符串，另一个以字符串作为右值引用。在这两种情况下，都传递了带有\textit{std::move()}的字符串。\par
+
+\begin{itemize}
+	\item 按值获取字符串的函数将使用移动语义，因为新字符串是用传递的参数的值创建的。
+	\item 通过右值引用获取字符串的函数可以使用移动语义，传递参数不会创建新字符串。是否窃取/修改传递的参数值取决于函数的实现。
+\end{itemize}
+
+因此:\par
+
+\begin{itemize}
+	\item 声明为支持移动语义的函数可能不使用移动语义。
+	\item 通过值声明接受参数的函数将使用移动语义。
+\end{itemize}
+
+移动语义的效果并不能保证任何优化发生或任何优化的效果。我们所知道的是，传递的对象随后处于有效但未定义的状态。\par
+
+
+
+
+
+
+
+
+
+
+
+
+

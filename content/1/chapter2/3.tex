@@ -1,0 +1,88 @@
+在\textit{std::move()}之后，移动的对象不会(部分)销毁。它们仍然是有效的对象，至少会为其调用析构函数。然而，它们也应该是有效的，因为它们具有一致的状态，所有操作都按照预期工作，但不知道的是它们的值。这就像使用类型的参数，而不知道传递了哪个值。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{2.3.1 有效但定义的状态}
+
+C++标准库保证移动的对象处于有效但未定义的状态。\par
+
+考虑如下代码:\par
+
+\begin{lstlisting}[caption={}]
+std::string s;
+...
+coll.push_back(std::move(s));
+\end{lstlisting}
+
+用\textit{std::move()}传递s之后，可以获取字符数量，打印相应的值，甚至赋一个新值。如果不先检查字符数量，就不能打印第一个字符或任何其他字符:\par
+
+\begin{lstlisting}[caption={}]
+foo(std::move(s)); // keeps s in a valid but unclear state
+
+std::cout << s << '\n'; // OK (don’t know which value is written)
+std::cout << s.size() << '\n'; // OK (writes current number of characters)
+std::cout << s[0] << '\n'; // ERROR (potentially undefined behavior)
+std::cout << s.front() << '\n'; // ERROR (potentially undefined behavior)
+s = "new value"; // OK
+\end{lstlisting}
+
+尽管不知道具体的值，但该字符串处于一致状态。例如，\textit{s.size()}将返回字符数，可以遍历所有有效的索引:\par
+
+\begin{lstlisting}[caption={}]
+foo(std::move(s)); // keeps s in a valid but unclear state
+
+for (int i = 0; i < s.size(); ++i) {
+	std::cout << s[i]; // OK
+}
+\end{lstlisting}
+
+对于用户定义类型，还应该确保移动的对象处于有效状态，这有时需要声明或实现移动操作。“移动后的状态”这一章将对此进行详细讨论。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{2.3.2 重用移动的对象}
+
+您可能想知道为什么已移动的对象仍然是有效的对象，并且没有(部分)被销毁。原因是有一些有用的移动语义应用，在这些应用中再次使用已移动的对象是有意义的。\par
+
+例如，考虑从流中逐行读取字符串并将其移动到vector对象中的代码:\par
+
+\begin{lstlisting}[caption={}]
+std::vector<std::string> allRows;
+std::string row;
+while (std::getline(myStream, row)) { // read next line into row
+	allRows.push_back(std::move(row)); // and move it to somewhere
+}
+\end{lstlisting}
+
+每次将一行读入行后，使用\textit{std::move()}将\textit{row}的值移动到所有行的向量中。然后，s\textit{td::getline()}再次使用已移动的对象行来读入下一行。\par
+
+第二个例子，考虑一个交换两个值的泛型函数:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void swap(T& a, T& b)
+{
+	T tmp{std::move(a)};
+	a = std::move(b); // assign new value to moved-from a
+	b = std::move(tmp); // assign new value to moved-from b
+}
+\end{lstlisting}
+
+我们将a的值移动到一个临时对象中，以便之后能够移动并赋值b的值。然后，被移动的对象b接收到tmp的值，这是a之前的值。\par
+
+例如，在排序算法中使用了这样的代码，我们移动不同元素的值，使它们处于有序状态。给已移动的对象赋新值总是发生在那里。该算法甚至可以对这种移动对象的方式使用排序。\par
+
+通常，已移动的对象应该是可以撤销的有效对象(析构函数不应该失败)，重用以获得其他值，并支持类型的所有操作对象，而不需要知道具体值。“移动后的状态”这一章将对此进行详细讨论。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{2.3.3 将对象赋值给它们自己}
+
+已移动的对象处于有效但未定义状态的规则，通常也适用于直接或间接自移动的对象。\par
+
+例如，下面的语句之后，对象x通常在不知道其值的情况下是有效的:\par
+
+\begin{lstlisting}[caption={}]
+x = std::move(x); // afterwards x is valid but has an unclear value
+\end{lstlisting}
+
+同样，C++标准库保证对用户定义类型的实例对象通常也提供这种保证，但有时必须实现一些东西来修复默认生成的移动状态。\par
+
+

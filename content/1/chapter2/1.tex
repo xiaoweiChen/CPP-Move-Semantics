@@ -1,0 +1,88 @@
+\hspace*{\fill} \par %插入空行
+\textbf{2.1 右值引用}
+
+为了支持移动语义，C++引入了一种新的引用类型:\textit{右值引用}。我们讨论一下这是什么，以及如何使用。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{2.1.1 细节部分}
+
+右值引用使用两个\&号声明。与普通引用一样，右值引用了一个存在的对象，该对象作为初始值传递。但根据语义，右值引用只能引用一个没有名称的临时对象，或使用\textit{std::move()}的对象:\par
+
+\begin{lstlisting}[caption={}]
+std::string returnStringByValue(); // forward declaration
+...
+std::string s{"hello"};
+...
+std::string&& r1{s}; // ERROR
+std::string&& r2{std::move(s)}; // OK
+std::string&& r3{returnStringByValue()}; // OK, extends lifetime of return value
+\end{lstlisting}
+
+右值引用来自这样一个事实:对象通常只能引用右值，这是类别，用于没有名称的临时对象和使用\textit{std::move()}的对象。\par
+
+与成功初始化返回值引用一样，引用将返回值的生命周期延长到引用的生命周期结束(普通的const左值引用已经具有此行为)。\par
+
+用于初始化引用的语法无关紧要。使用等号、大括号或圆括号都可以:\par
+
+\begin{lstlisting}[caption={}]
+std::string s{"hello"};
+...
+std::string&& r1 = std::move(s); // OK, rvalue reference to s
+std::string&& r2{std::move(s)}; // OK, rvalue reference to s
+std::string&& r3(std::move(s)); // OK, rvalue reference to s
+\end{lstlisting}
+
+所有这些引用都具有这样的语义:“只要对象的状态有效，就可以窃取/修改引用的对象。”编译器不会检查这些语义，因此可以像对该类型的任何非const对象那样修改右值引用，也可能不做修改。如果对一个对象有一个右值引用，该对象可能会收到一个不同的值(可能是也可能不是一个默认构造对象的值)，或者保留原始值。\par
+
+移动语义允许我们使用不再需要的值进行优化。如果编译器自动检测到从一个生命周期结束的对象中使用了一个值，将自动切换到移动语义:\par
+
+\begin{itemize}
+	\item 传递一个临时对象的值，该对象将在语句执行后自动撤销。
+	\item 传递一个使用\textit{std::move()}的非const对象。
+\end{itemize}
+
+\hspace*{\fill} \par %插入空行
+\textbf{2.1.2 作为参数的右值引用}
+
+当我们将形参声明为右值引用时，它具有的行为和语义:\par
+
+\begin{itemize}
+	\item 形参只能绑定到一个没有名称的临时对象，或者绑定到一个使用\textit{std::move()}的对象。
+	\item 根据右值引用的语义:
+	\begin{itemize}
+		\item[-] 调用者不再对值感兴趣。因此，可以修改参数所引用的对象。
+		\item[-] 但是，调用者可能仍然对使用对象感兴趣。因此，任何修改都应该使引用的对象保持有效状态。
+	\end{itemize}	
+\end{itemize}
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+void foo(std::string&& rv); // takes only objects where we no longer need the value
+...
+std::string s{"hello"};
+...
+foo(s); // ERROR
+foo(std::move(s)); // OK, value of s might change
+foo(returnStringByValue()); // OK
+\end{lstlisting}
+
+你可以在通过\textit{std::move()}传递命名对象后使用，但通常不这样做。推荐的编程方式是不在\textit{std::move()}后面使用对象:\par
+
+\begin{lstlisting}[caption={}]
+void foo(std::string&& rv); // takes only objects where we no longer need the value
+...
+std::string s{"hello"};
+...
+foo(std::move(s)); // OK, value of s might change
+std::cout << s << '\n'; // OOPS, you don’t know which value is printed
+foo(std::move(s)); // OOPS, you don’t know which value is passed
+s = "hello again"; // OK, but rarely done
+foo(std::move(s)); // OK, value of s might change
+\end{lstlisting}
+
+对于标记为“OOPS”的两行，只要不对s的当前值有期望，调用在技术上是可以的。因此，打印是可以的。\par
+
+
+
+
