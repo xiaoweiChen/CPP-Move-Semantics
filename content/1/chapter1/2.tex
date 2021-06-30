@@ -44,7 +44,7 @@ class vector {
 在本例中，元素是字符串。如果我们复制或移动传递的字符串会发生什么。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{使用拷贝构造函数}
+\textbf{1.2.1 使用拷贝构造函数}
 
 用于传统复制语义的\textit{push\_back(const T\&)}调用string类的拷贝构造函数，该构造函数初始化vector中的新元素。一个非常简单的string类实现的复制构造函数，看起来是这样的:\par
 
@@ -86,7 +86,7 @@ std::string b = a; // create b as a copy of a
 \end{center}
 
 \hspace*{\fill} \par %插入空行
-\textbf{使用移动构造函数}
+\textbf{1.2.2 使用移动构造函数}
 
 对于移动语义，\textit{push\_back(T\&\&)}调用相应的构造函数，即\textit{\textbf{移动构造函数}}。从现有字符串创建新字符串的构造函数，和移动语义一样，构造函数使用非\textit{const}右值引用(\textit{\&\&})作为形参:\par
 
