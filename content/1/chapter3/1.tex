@@ -1,0 +1,255 @@
+假设有一个相当简单的类，其中的成员类型的移动语义可以让其不一样:\par
+
+{\color{red}{basics/customer.hpp}}
+
+\begin{lstlisting}[caption={}]
+#include <string>
+#include <vector>
+#include <iostream>
+#include <cassert>
+
+class Customer {
+private:
+	std::string name; // name of the customer
+	std::vector<int> values; // some values of the customer
+public:
+	Customer(const std::string& n)
+	: name{n} {
+		assert(!name.empty());
+	}
+
+	std::string getName() const {
+		return name;
+	}
+
+	void addValue(int val) {
+		values.push_back(val);
+	}
+
+	friend std::ostream& operator<< (std::ostream& strm, const Customer& cust) {
+		strm << '[' << cust.name << ": ";
+		for (int val : cust.values) {
+			strm << val << ' ';
+		}
+		strm << ']';
+		return strm;
+	}
+};
+\end{lstlisting}
+
+这个类有两个(可能)开销很大的成员，一个是字符串name，一个是整型vector:\par
+
+\begin{lstlisting}[caption={}]
+class Customer {
+private:
+	std::string name; // name of the customer
+	std::vector<int> values; // some values of the customer
+	...
+};
+\end{lstlisting}
+
+复制这两个成员的成本很高\par
+
+\begin{itemize}
+	\item 要复制name，我们必须为字符串的字符分配内存(除非name很短，并且使用小字符串优化(SSO)实现字符串)。
+	\item 要复制这些值，必须为vector的元素分配内存。
+\end{itemize}
+
+如果有一个string类型的vector或者其他大型元素类型，那么开销会更大。例如，string类型vector的副本必须为元素的动态数组和每个元素所需的内存分配内存。\par
+
+好消息是，这样的类通常自动支持移动语义。自C++11以来，编译器通常会生成移动构造函数和移动赋值操作符(类似于自动生成复制构造函数和复制赋值操作符)。\par
+
+这样会有以下效果:\par
+
+\begin{itemize}
+	\item 按值返回本地Customer将使用移动语义(如果它没有优化掉的话)。
+	\item 通过值传递一个未命名的Customer对象将使用移动语义(如果没有优化掉的话)。
+	\item 按值传递一个临时的Customer对象(例如，由另一个函数返回)将使用移动语义(如果它没有优化掉的话)。
+	\item 通过值传递一个标有\textit{std::move()}的Customer对象将使用移动语义(如果它没有被优化掉的话)。
+\end{itemize}
+
+例如:\par
+
+{\color{red}{basics/customer1.cpp}}
+
+\begin{lstlisting}[caption={}]
+#include "customer.hpp"
+#include <iostream>
+#include <random>
+
+#include <utility> // for std::move()
+
+int main()
+{
+	// create a customer with some initial values:
+	Customer c{"Wolfgang Amadeus Mozart" };
+	for (int val : {0, 8, 15}) {
+		c.addValue(val);
+	}
+	std::cout << "c: " << c << '\n'; // print value of initialized c
+	
+	// insert the customer twice into a collection of customers:
+	std::vector<Customer> customers;
+	customers.push_back(c); // copy into the vector
+	customers.push_back(std::move(c)); // move into the vector
+	std::cout << "c: " << c << '\n'; // print value of moved-from c
+	
+	// print all customers in the collection:
+	std::cout << "customers:\n";
+	for (const Customer& cust : customers) {
+		std::cout << " " << cust << '\n';
+	}
+}
+\end{lstlisting}
+
+这里，我们创建并初始化一个customer c(为了避免SSO，我们使用一个相当长的名称)。初始化c后，第一个输出如下:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+c: [Wolfgang Amadeus Mozart: 0 8 15 ]
+\end{tcolorbox}
+
+然后将这个customer插入到vector中两次:复制一次，移动一次:\par
+
+\begin{lstlisting}[caption={}]
+customers.push_back(c); // copy into the vector
+customers.push_back(std::move(c)); // move into the vector
+\end{lstlisting}
+
+然后，c的输出:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+c: [: ]
+\end{tcolorbox}
+
+第二次调用push\_back()时，名称和值都移到了vector的第二个元素中。但是，已移动的对象处于有效但未指定的状态。因此，第二个输出可以有任何值name和values:\par
+
+\begin{itemize}
+	\item 可能仍然有相同的值:\par
+	\begin{tcolorbox}[colback=white,colframe=black]
+	c: [Wolfgang Amadeus Mozart: 0 8 15 ]
+	\end{tcolorbox}
+	\item 可能有完全不同的值:\par
+	\begin{tcolorbox}[colback=white,colframe=black]
+	c: [value was moved away: 0 ]
+	\end{tcolorbox}
+\end{itemize}
+
+然而，移动语义是为了优化性能而提供，而分配不同的值并不一定是提高性能，所以在实现中通常把字符串和vector都设为空。\par
+
+在任何情况下，我们都可以看到为Customer类自动启用了移动语义。出于同样的原因，现在可以保证以下代码是高效的:\par
+
+\begin{lstlisting}[caption={}]
+Customer createCustomer()
+{
+	Customer c{ ... };
+	...
+	return c; // uses move semantics if not optimized away
+}
+
+std::vector<Customer> customers;
+...
+customers.push_back(createCustomer()); // uses move semantics
+\end{lstlisting}
+
+详见basics/customer2.cpp的示例。\par
+
+重要的是，自从C++11以来，类中能使用移动语义的成员，就会使用移动语义。这些类有:\par
+
+\begin{itemize}
+	\item 如果从不需要的源创建新对象，则使用成员的移动构造函数:\par
+	\begin{lstlisting}[caption={}]
+	Customer c1{ ... }
+	...
+	Customer c2{std::move(c1)}; // move members of c1 to members of c2
+	\end{lstlisting}
+	\item 移动赋值操作符如果从一个不再需要该的源赋值。\par
+	\begin{lstlisting}[caption={}]
+	Customer c1{ ... }, c2{ ... };
+	...
+	c2 = std::move(c1); // move assign members of c1 to members of c2
+	\end{lstlisting}
+\end{itemize}
+
+注意，通过显式实现以下改进，这样的类可以从移动语义获益更多:\par
+
+\begin{itemize}
+	\item 初始化成员时使用移动语义
+	\item 使用移动语义使获取函数既安全又快速
+\end{itemize}
+
+\hspace*{\fill} \par %插入空行
+\textbf{3.1.1 什么时候使用自启动移动语义的类?}
+
+编译器可以自动生成特殊的移动成员函数(移动构造函数和移动赋值操作符)。然而，也有一些限制。约束是编译器必须假定生成的操作是正确的。正确的做法是优化正常的复制行为:我们移动成员，而不是复制成员。\par
+
+如果类改变了复制或赋值的常规行为，那么在优化这些操作时可能也必须做一些不同的事情。因此，当以下至少一个特殊成员函数被用户声明时，将禁用移动操作的自动生成:\par
+
+\begin{itemize}
+	\item 拷贝构造函数
+	\item 拷贝赋值运算符
+	\item 另一个移动操作
+	\item 析构函数
+\end{itemize}
+
+注意，是“用户声明”。任何形式的复制构造函数、复制赋值操作符或析构函数的显式声明都禁用移动语义。例如，如果我们实现了一个什么也不做的析构函数，就禁用了移动语义:\par
+
+\begin{lstlisting}[caption={}]
+class Customer {
+	...
+	~Customer() { // automatic move semantics is disabled
+	}
+};
+\end{lstlisting}
+
+即使下面的声明也足以禁用移动语义:\par
+
+\begin{lstlisting}[caption={}]
+class Customer {
+	...
+	~Customer() = default; // automatic move semantics is disabled
+};
+\end{lstlisting}
+
+用户声明析构函数的行为为默认的，因此禁用了移动语义。通常，这种情况下，复制语义将作为一种退阶选择。\par
+
+因此没有特定的需要，就不要实现或声明析构函数(很多程序员都没有遵循这一规则)。\par
+
+这也意味着默认情况下，多态基类禁用了移动语义:\par
+
+\begin{lstlisting}[caption={}]
+class Base {
+	...
+	virtual ~Base() { // automatic move semantics is disabled
+	}
+};
+\end{lstlisting}
+
+注意，这意味着移动语义只对在这个基类中声明的成员禁用。对于派生类的成员，移动语义仍然会自动生成(如果派生类没有显式声明特殊的成员函数)。在套路类层次中的移动语义时会讨论了这一点。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{3.1.2 生成的移动操作有负面影响的情况}
+
+请注意，生成的移动操作可能会引入问题，即使生成的复制操作工作正确。特别是在以下情况，必须小心:\par
+
+\begin{itemize}
+	\item 对成员变量有限制
+	\begin{itemize}
+		\item[-] 值有限制
+		\item[-] 值相互依赖
+	\end{itemize}
+	\item 使用了引用语义的成员(指针，智能指针，…)
+	\item 对象没有默认构造
+\end{itemize}
+
+可能出现的问题是，已移动的对象可能不再有效:可能破坏不变量，或者对象的析构函数失败。例如，本章中的Customer类的对象可能突然有一个空名称，即使我们有断言来避免这种情况。关于已移动的那一章将对此进行详细讨论。\par
+
+
+
+
+
+
+
+
+
+
+
