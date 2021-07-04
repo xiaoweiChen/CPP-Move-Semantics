@@ -1,0 +1,55 @@
+如果支持的话，按值返回本地对象会自动使用移动语义。然而，为了安全起见，程序员可能会尝试使用显式\textit{std::move()}强制执行:\par
+
+\begin{lstlisting}[caption={}]
+std::string foo()
+{
+	std::string s;
+	...
+	return std::move(s); // BAD: don’t do this
+}
+\end{lstlisting}
+
+请记住，\textit{std::move()}只是对右值引用的static\_cast。因此，\textit{std::move(s)}是产生std::string\&\&类型的表达式。然而，这不再匹配返回类型，因此禁用了返回值优化，这通常允许返回对象作为返回值使用。对于没有实现移动语义的类型，这甚至可能会强制复制返回值，而不是仅仅使用返回的对象作为返回值。\par
+
+因此，如果按值返回局部对象时，不要使用\textit{std::move()}:\par
+
+\begin{lstlisting}[caption={}]
+std::string foo()
+{
+	std::string s;
+	...
+	return s; // best performance (return value optimization or move)
+}
+\end{lstlisting}
+
+临时对象时使用\textit{std::move()}是多余的。对于按值返回对象的createString()函数，应该只使用返回值:\par
+
+\begin{lstlisting}[caption={}]
+std::string s{createString()}; // OK
+\end{lstlisting}
+
+而不是用\textit{std::move()}再次标记:\par
+
+\begin{lstlisting}[caption={}]
+std::string s{std::move(createString())}; // BAD: don’t do this
+\end{lstlisting}
+
+编译器可能(可以选择)对任何适得其反或不必要的std::move()使用发出警告。例如，gcc有选项-Wpessimizing-move(通过-Wall启用)和-Wredundancy-move(通过-Wextra启用)。\par
+
+不过，在某些应用程序中，返回语句中的\textit{std::move()}可能是合适的。一个例子是移出成员的值。另一个例子是返回带有移动语义的参数。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
