@@ -1,0 +1,116 @@
+从C++98开始，可以重载成员函数来实现const和非const版本。例如:\par
+
+\begin{lstlisting}[caption={}]
+class C {
+public:
+	...
+	void foo(); // foo() for non-const objects
+	void foo() const; // foo() for const objects
+};
+\end{lstlisting}
+
+圆括号后面的限定符允许我们限定一个没有传递给形参的对象:可以调用此成员函数的对象。\par
+
+现在，有了移动语义，我们有了用限定符重载函数的新方法，因为我们有了不同的引用限定符。考虑以下程序:\par
+
+{\color{red}{basics/refqual.cpp}}
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+class C {
+public:
+	void foo() const& {
+		std::cout << "foo() const&\n";
+	}
+	void foo() && {
+		std::cout << "foo() &&\n";
+	}
+	void foo() & {
+		std::cout << "foo() &\n";
+	}
+	void foo() const&& {
+		std::cout << "foo() const&&\n";
+	}
+};
+
+int main()
+{
+	C x;
+	x.foo(); // calls foo() &
+	C{}.foo(); // calls foo() &&
+	std::move(x).foo(); // calls foo() &&
+	
+	const C cx;
+	cx.foo(); // calls foo() const&
+	std::move(cx).foo(); // calls foo() const&&
+}
+\end{lstlisting}
+
+这个程序演示了所有可能的引用限定符以及它们何时调用。通常，我们只有两到三个这样的重载，比如对getter使用\&\&和const\&(和\&)。\par
+
+还要注意，引用和非引用限定符的重载都不允许:\par
+
+\begin{lstlisting}[caption={}]
+class C {
+public:
+	void foo() &&;
+	void foo() const; // ERROR: can’t overload by both reference and value qualifiers
+};
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
