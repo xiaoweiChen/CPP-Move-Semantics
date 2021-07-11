@@ -1,0 +1,137 @@
+我们看到，特别是当我们必须实现一个移动构造函数时，我们应该用noexcept保证来声明。通常，遵循C++标准的规则，当所有基类和所有成员类型在移动赋值时都没有抛出异常时，应该声明为noexcept。\par
+
+通常的模式如下:\par
+
+\begin{lstlisting}[caption={}]
+class Base {
+	...
+};
+
+class Drv : public Base {
+	MemType member;
+	...
+	// move constructor:
+	Drv(Drv&&) noexcept(std::is_nothrow_move_constructible_v<Base> &&
+	std::is_nothrow_move_constructible_v<MemType>);
+};
+\end{lstlisting}
+
+这里，Drv类的移动构造函数保证，如果基类Base和成员类型MemType提供了这个保证，则不会抛出异常。\par
+
+移动赋值操作符可能使用相同的模式。但请注意，在多态类型中应该删除移动赋值操作符，所以通常不需要在派生类中实现它们。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{7.3.1 检查抽象基类中的移动构造函数}
+
+请注意，类型特征std::is\_nothrow\_move\_constructible<>并不总是如预期的那样。对于抽象基类，总是产生false，因为还会检查是否可以用移动构造函数创建该类型的对象，而这对于抽象类型是不可能的。\par
+
+因此，在所有情况下都有效的“如果抽象基类保证不抛出异常，则继承类也应该保证不抛出异常”的声明不能使用标准类型特征来表述。通常，只需(必须)知道基类的移动构造函数是否可能抛出。\par
+
+为了能够检查一个类的移动构造函数是否保证不会抛出，可以实现以下helper类型特征(在这里，使用C++20实现)但是，请注意，必须为每个纯虚函数提供一个实现:\par
+
+{\color{red}{poly/isnothrowmovable.hpp}}\par
+
+\begin{lstlisting}[caption={}]
+// type trait to check whether a base class guarantees not to throw
+// in the move constructor (even if the constructor is not callable)
+#ifndef IS_NOTHROW_MOVABLE_HPP
+#define IS_NOTHROW_MOVABLE_HPP
+
+#include <type_traits>
+
+template<typename Base>
+struct Wrapper : Base {
+	using Base::Base;
+	// implement all possibly wrapped pure virtual functions:
+	void print() const {}
+	...
+};
+
+template<typename T>
+static constexpr inline bool is_nothrow_movable_v
+	= std::is_nothrow_move_constructible_v<Wrapper<T>>;
+
+#endif // IS_NOTHROW_MOVABLE_HPP
+\end{lstlisting}
+
+现在甚至可以检查抽象基类的移动构造函数是否为noexcept。下面的程序演示了标准和用户定义的类型特征的不同行为:\par
+
+{\color{red}{poly/isnothrowmovable.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include "isnothrowmovable.hpp"
+#include <iostream>
+
+class Base {
+	std::string id;
+	...
+public:
+	virtual void print() const = 0; // pure virtual function (forces abstract base class)
+	...
+	virtual ~Base() = default;
+	protected:
+	// protected copy and move semantics (also forces abstract base class):
+	Base(const Base&) = default;
+	Base(Base&&) = default;
+	// disable assignment operator (due to the problem of slicing):
+	Base& operator= (Base&&) = delete;
+	Base& operator= (const Base&) = delete;
+};
+
+int main()
+{
+	std::cout << std::boolalpha;
+	std::cout << "std::is_nothrow_move_constructible_v<Base>: "
+	<< std::is_nothrow_move_constructible_v<Base> << '\n';
+	std::cout << "is_nothrow_movable_v<Base>: "
+	<< is_nothrow_movable_v<Base> << '\n';
+}
+\end{lstlisting}
+
+该程序有以下输出:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+std::is\_nothrow\_move\_constructible<Base>: false \\
+is\_nothrow\_movable<Base>: true
+\end{tcolorbox}
+
+因此，如果必须在一个抽象基类派生的类中实现移动构造函数，可以使用这样一个helper类型特征来声明移动构造函数。如下所示:\par
+
+\begin{lstlisting}[caption={}]
+class Drv : public Base {
+	MemType member;
+	...
+	// move constructor:
+	Drv(Drv&&) noexcept(is_nothrow_movable_v<Base> &&
+	is_nothrow_movable_v<MemType>);
+};
+\end{lstlisting}
+
+由于不需要实现所有纯虚函数，C++标准中会缺少编译器支持的类型特征。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

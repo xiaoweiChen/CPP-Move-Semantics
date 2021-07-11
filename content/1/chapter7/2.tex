@@ -1,0 +1,193 @@
+正如所见，noexcept的引入是为了允许条件保证不抛出异常。通常，在编译时知道函数不能抛出异常可以改进代码和优化，因为不必处理由于抛出异常而可能进行的清理。注意，如果违反了noexcept保证，程序会调用std::terminate()，而后者通常会调用std::abort()来导致“异常的程序终止”(例如，core dump)。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{7.2.1 声明noexcept的函数的规则}
+
+当声明noexcept条件时，有几个适用的规则:\par
+
+\begin{itemize}
+	\item noexcept条件必须是编译时表达式，该表达式的值可转换为bool类型。
+	\item 不能重载只有不同条件的函数。
+	\item 在类层次结构中，noexcept条件是接口的一部分。用一个不是noexcept的函数覆盖一个不是noexcept的基类函数是错误的。
+\end{itemize}
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+class Base {
+	public:
+	...
+	virtual void foo(int) noexcept;
+	virtual void foo(int); // ERROR: overload on different noexcept clause only
+	virtual void bar(int);
+};
+
+class Derived : public Base {
+	public:
+	...
+	virtual void foo(int) override; // ERROR: override giving up the noexcept guarantee
+	virtual void bar(int) noexcept; // OK (here we also guarantee not to throw)
+};
+\end{lstlisting}
+
+但是，对于非虚函数，派生类成员可以使用不同的noexcept声明隐藏基类成员:\par
+
+\begin{lstlisting}[caption={}]
+class Base {
+	public:
+	...
+	void foo(int) noexcept;
+};
+
+class Derived : public Base {
+	public:
+	...
+	void foo(int); // OK, hiding instead of overriding
+};
+\end{lstlisting}
+
+条件在编译时计算后遵循相同的规则。例如，考虑以下类的层次结构:\par
+
+\begin{lstlisting}[caption={}]
+class Base {
+	public:
+	virtual void func() noexcept(sizeof(int) < 8); // might throw if sizeof(int) >= 8
+};
+
+class Derived : public Base {
+	public:
+	void func() noexcept(sizeof(int) < 4) override; // might throw if sizeof(int) >= 4
+};
+\end{lstlisting}
+
+在这种情况下，如果int的大小为4，我们将得到一个编译时错误，因为基类保证在调用func()时不抛出，而派生类不再为func()提供这种保证。当int的大小小于4时，两者都是noexcept，这很好。当int的大小至少为8时，两者都不是noexcept，这也没问题。因此，派生类只需要进一步限制异常保证。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{7.2.2 noexcept的特殊成员函数}
+
+不能为特殊成员函数自动生成条件。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{noexcept的复制和移动特殊成员函数}
+
+按照规则，当生成但未实现特殊成员函数时，将生成noexcept条件。这种情况下，如果对所有基类和非静态成员使用相应操作应该保证不抛出异常。\par
+
+例如:\par
+
+{\color{red}{basics/specialnoexcept.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <type_traits>
+
+class B
+{
+	std::string s;
+};
+
+int main()
+{
+	std::cout << std::boolalpha;
+	std::cout << std::is_nothrow_default_constructible<B>::value << '\n';
+	std::cout << std::is_nothrow_copy_constructible<B>::value << '\n';
+	std::cout << std::is_nothrow_move_constructible<B>::value << '\n';
+	std::cout << std::is_nothrow_copy_assignable<B>::value << '\n';
+	std::cout << std::is_nothrow_move_assignable<B>::value << '\n';
+}
+\end{lstlisting}
+
+程序输出如下:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+true \\
+false \\
+true \\ 
+false \\
+true 
+\end{tcolorbox}
+
+生成的复制构造函数和复制赋值操作符可能会抛出异常，因为复制std::string可能会抛出异常。但是，生成的默认构造函数、移动构造函数和移动赋值操作符保证不会抛出异常，因为类std::string的默认构造函数、移动构造函数和移动赋值操作符保证不会抛出异常。\par
+
+请注意，noexcept条件甚至在这些特殊成员函数使用=default进行声明时也会生成。因此，如果像下面这样声明B类，效果是一样的:\par
+
+\begin{lstlisting}[caption={}]
+class B
+{
+	std::string s;
+public:
+	B(const B&) = default; // noexcept condition automatically generated
+	B(B&&) = default; // noexcept condition automatically generated
+	B& operator= (const B&) = default; // noexcept condition automatically generated
+	B& operator= (B&&) = default; // noexcept condition automatically generated
+};
+\end{lstlisting}
+
+当有一个默认的特殊成员函数时，可以显式地指定一个不同于生成的noexcept保证。例如:\par
+
+\begin{lstlisting}[caption={}]
+class C
+{
+	...
+public:
+	C(const C&) noexcept = default; // guarantees not to throw (OK since C++20)
+	C(C&&) noexcept(false) = default; // specifies that it might throw (OK since C++20)
+	...
+};
+\end{lstlisting}
+
+在C++20之前，如果生成的noexcept条件与指定的noexcept条件相矛盾，则删除已定义的函数。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{noexcept的析构函数}
+
+按照规则，析构函数总是保证在默认情况下不会抛出异常。这既适用于生成的析构函数，也适用于实现的析构函数。\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+class B
+{
+	std::string s;
+	public:
+	...
+	~B() { // automatically always declared as ~B() noexcept
+		...
+	}
+};
+\end{lstlisting}
+
+对于noexcept(false)，可以在没有这个保证的情况下进行声明，但这通常没有意义，因为C++标准库保证析构函数从不抛出异常。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
