@@ -1,0 +1,157 @@
+对于影响移动语义的函数和成员的值类型，我们有特殊的规则。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{8.2.1 函数的值类型}
+
+C++标准中的一个特殊规则是，所有引用函数的表达式都是lvalue。\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+void f(int) {
+}
+
+void(&fref1)(int) = f; // fref1 is an lvalue
+void(&&fref2)(int) = f; // fref2 is also an lvalue
+
+auto& ar = std::move(f); // OK: ar is lvalue of type void(&)(int)
+\end{lstlisting}
+
+与对象类型相反，可以将非const lvalue引用绑定到标记为std::move()的函数指针，因为标记为std::move()的函数指针仍然是lvalue。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{8.2.2 数据成员的值类型}
+
+如果你使用对象的数据成员(例如，当使用std::pair<>的第一个和第二个成员时)，将使用特殊规则。\par
+
+通常，数据成员的值类型如下:\par
+
+\begin{itemize}
+	\item lvalue的数据成员是lvalue。
+	\item rvalue的引用和静态数据成员是lvalue。
+	\item rvalue的普通数据成员是xvalue。
+\end{itemize}
+
+这些规则反映了引用或静态成员实际上不是对象的一部分。如果不再需要对象的值，这也适用于对象的普通数据成员。但是，引用或静态的成员的值可能仍然被其他对象所使用。\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+std::pair<std::string, std::string&> foo(); // note: member second is reference
+
+std::vector<std::string> coll;
+...
+coll.push_back(foo().first); // moves because first is an xvalue here
+coll.push_back(foo().second); // copies because second is an lvalue here
+\end{lstlisting}
+
+需要使用std::move()来移动第二个成员:\par
+
+\begin{lstlisting}[caption={}]
+coll.push_back(std::move(foo().second)); // moves
+\end{lstlisting}
+
+如果你有一个lvalue(一个有名字的对象)，你有两种方式来移动一个成员std::move():\par
+
+\begin{itemize}
+	\item std::move(obj).member
+	\item std::move(obj.member)
+\end{itemize}
+
+因为std::move()的意思是“不再需要这个值”，所以如果不再需要对象的值，应该标记obj。如果你不再需要成员的值，你应该标记member。然而，实际情况会有点复杂。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{std::move()用于普通数据成员}
+
+如果成员既不是静态也不是引用，std::move()能将成员转换为xvalues，以便能够使用移动语义。\par
+
+考虑声明了以下内容:\par
+
+\begin{lstlisting}[caption={}]
+std::vector<std::string> coll;
+std::pair<std::string, std::string> sp;
+\end{lstlisting}
+
+以下代码先将成员移动，然后再将成员移动到coll中:\par
+
+\begin{lstlisting}[caption={}]
+sp = ... ;
+coll.push_back(std::move(sp.first)); // move string first into coll
+coll.push_back(std::move(sp.second)); // move string second into coll
+\end{lstlisting}
+
+但是，下面的代码具有相同的效果:\par
+
+\begin{lstlisting}[caption={}]
+sp = ... ;
+coll.push_back(std::move(sp).first); // move string first into coll
+coll.push_back(std::move(sp).second); // move string second into coll
+\end{lstlisting}
+
+看起来有点奇怪，在std::move()标记对象之后仍然使用obj。但在本例中，我们知道对象的哪个部分可以移动，所以可以使用未移动的部分。因此，当必须实现一个移动构造函数时，我更喜欢用std::move()标记成员。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{std::move()用于引用或静态成员}
+
+如果成员是引用或静态的，则使用不同的规则:rvalue的引用或静态成员是lvalue。同样，这条规则反映了一个成员的值并不是对象的一部分。“不再需要对象的值”并不意味着“不再需要不属于对象的值(成员的值)”。\par
+
+因此，如果你有引用或静态成员，那么你如何使用std::move()是有区别的:\par
+
+\begin{itemize}
+	\item 对对象使用std::move()不起作用:\par
+	\begin{lstlisting}[caption={}]
+	struct S {
+		static std::string statString; // static member
+		std::string& refString; // reference member
+	};
+	S obj;
+	...
+	coll.push_back(std::move(obj).statString); // copies statString
+	coll.push_back(std::move(obj).refString); // copies refString
+	\end{lstlisting}
+	\item 对成员使用std::move()具有的效果:\par
+	\begin{lstlisting}[caption={}]
+	struct S {
+		static std::string statString;
+		std::string& refString;
+	};
+	S obj;
+	...
+	coll.push_back(std::move(obj.statString); // moves statString
+	coll.push_back(std::move(obj.refString); // moves refString
+	\end{lstlisting}
+	这样的举措是否有用是另一个问题。窃取静态成员或引用成员的值意味着修改所使用对象外部的值。这还能说得通，但也可能是意外和危险的。通常，类型S应该更好地保护对这些成员的访问。\par
+\end{itemize}
+
+泛型代码中，可能不知道成员是静态的还是引用的。因此，使用std::move()方法来标记对象是不那么危险的，就是看起来很奇怪:\par
+
+\begin{lstlisting}[caption={}]
+coll.push_back(std::move(obj).mem1); // move value, copy reference/static
+coll.push_back(std::move(obj).mem2); // move value, copy reference/static
+\end{lstlisting}
+
+以同样的方式，稍后将介绍的std::forward<>()可以用来完美地转发对象的成员。参见basics/members.cpp获取完整的示例。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,19 @@
+\begin{itemize}
+	\item C++程序中的任何表达式都只属于以下主要值类别中的一种:
+	\begin{itemize}
+		\item[-] lvalue (用于命名对象或字符串字面量)
+		\item[-] prvalue (用于一个未命名的临时对象)
+		\item[-] xvalue (对于标记为std::move()的对象)
+	\end{itemize}
+	\item C++中的调用或操作是否有效取决于类型和值类别。
+	\item 类型的rvalue引用只能绑定到rvalue(prvalues或xvalues)。
+	\item 隐式操作可能更改传递参数的值类别。
+	\item 将rvalue传递给rvalue引用，可以将其绑定到lvalue。
+	\item 移动语义不可传递。
+	\item 函数和对函数的引用总是lvalue。
+	\item 对于rvalue(临时对象或标记为std::move()的对象)，普通值成员具有移动语义，而引用或静态成员没有。
+	\item decltype既可以检查所传递名称的声明类型，也可以检查所传递表达式的类型和值类别。
+\end{itemize}
+
+
+\newpage

@@ -1,0 +1,97 @@
+现在让我们看一下将形参声明为rvalue引用的函数的实现:\par
+
+\begin{lstlisting}[caption={}]
+void rvFunc(std::string&& str) {
+	...
+}
+\end{lstlisting}
+
+我们只能传递rvalue:\par
+
+\begin{lstlisting}[caption={}]
+std::string s{ ... };
+rvFunc(s); // ERROR: passing an lvalue to an rvalue reference
+rvFunc(std::move(s)); // OK, passing an xvalue
+rvFunc(std::string{"hello"}); // OK, passing a prvalue
+\end{lstlisting}
+
+然而，当在函数内部使用str形参时，我们处理的是有名称的对象。这意味着我们使用str作为lvalue。\par
+
+不能直接递归地调用自己的函数:\par
+
+\begin{lstlisting}[caption={}]
+void rvFunc(std::string&& str) {
+	rvFunc(str); // ERROR: passing an lvalue to an rvalue reference
+}
+\end{lstlisting}
+
+必须再次用std::move()标记str:\par
+
+\begin{lstlisting}[caption={}]
+void rvFunc(std::string&& str) {
+	rvFunc(std::move(str)); // OK, passing an xvalue
+}
+\end{lstlisting}
+
+这是已经讨论过的没有传递移动语义规则的规范。这是一个特性，而不是一个bug。如果传递了移动语义，我们就不能使用两次传递了移动语义的对象，因为第一次使用后，就会失去它的值。或者，我们需要临时禁用移动语义的特性。\par
+
+如果将一个rvalue引用参数绑定到一个rvalue(prvalue或xvalue)，该对象将被用作lvalue，我们必须再次将其转换为rvalue，以便将它传递给rvalue引用。\par
+
+现在，请记住std::move()只不过是对rvalue引用的static\_cast。也就是说，可以在递归调用中编写如下程序:\par
+
+\begin{lstlisting}[caption={}]
+void rvFunc(std::string&& str) {
+	rvFunc(static_cast<std::string&&>(str)); // OK, passing an xvalue
+}
+\end{lstlisting}
+
+我们将对象str转换为string类型。通过强制转换，我们做了一些事情:我们改变值的类型。根据规则，通过对rvalue引用的强制转换，lvalue变成了xvalue，因此允许将对象传递给rvalue引用。\par
+
+这并不是什么新鲜事:即使在C++11之前，声明为左值引用的形参在使用时也遵循左值规则。关键是声明中的引用指定了可以传递给函数的内容。对于函数内部的行为，与引用无关。\par
+
+困惑吗?这就是我们在C++标准中定义移动语义和值类型的规则。我们是否足够了解，其实并不重要。幸运的是，编译器明白这些规则。\par
+
+这里需要了解的是移动语义没有传递。如果传递一个带有移动语义的对象，必须再次用std::move()标记它，以将其语义转发给另一个函数。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
