@@ -1,0 +1,20 @@
+\begin{itemize}
+	\item 带有两个\&符(\&\&)的声明可以是两个不同的东西:
+	\begin{itemize}
+		\item[-] 如果不是函数模板形参，它是一个普通的ravlue引用，只绑定到ravlue。
+		\item[-] 如果是函数模板参数，它是一个通用引用，绑定到所有值类别。
+	\end{itemize}
+	\item 通用引用(在C++标准中称为转发引用)是一种可以通用地引用任何类型和值类别对象的引用。它的类型是
+		\begin{itemize}
+		\item[-] lvalue引用(类型\&)，如果它绑定到一个lvalue
+		\item[-] rvalue引用(类型\&\&)，如果它绑定到一个rvalue
+	\end{itemize}
+	\item 要完美地传递传递的实参，请使用std::forward<>()，并将该形参声明为函数模板形参的通用引用。
+	\item std::forward<>()是一个条件std::move()。如果它的参数是rvalue，则扩展为std::move()。
+	\item 使用std::forward<>()标记对象可能是有意义的，即使在调用成员函数时也是如此。
+	\item 通用引用是所有重载解析的次优选择。
+	\item 不要为通用引用实现泛型构造函数(或为特定类型进行约束)。
+\end{itemize}
+
+
+\newpage

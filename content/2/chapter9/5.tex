@@ -1,0 +1,10 @@
+如果想要完美地转发Lambda的参数，必须使用通用引用和std::forward<>()。但是，通常用auto\&\&声明通用引用。\par
+
+在C++20，你也可以在Lambda中使用模板形参:\par
+
+\begin{lstlisting}[caption={}]
+auto callFoo = []<typename T>(T&& arg) { // OK, universal reference since C++20
+	foo(std::forward<T>(arg)); // perfectly forward arg
+};
+\end{lstlisting}
+

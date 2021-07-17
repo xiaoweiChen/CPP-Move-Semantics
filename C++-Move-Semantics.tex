@@ -265,87 +265,87 @@
 		\subsubsection{8.7 总结}
 		\subfile{content/1/chapter8/7.tex}
 		
-	\section{Part II: Move Semantics in Generic Code}
-	\subsection{Perfect Forwarding}
-	%\subfile{content/chapter-9/9-0.tex}
-		\subsubsection{Motivation for Perfect Forwarding}
-		%\subfile{content/chapter-9/9-1.tex}
-		\subsubsection{Implementing Perfect Forwarding}
-		%\subfile{content/chapter-9/9-2.tex}
-		\subsubsection{Rvalue References versus Universal References}
-		%\subfile{content/chapter-9/9-3.tex}
-		\subsubsection{Overload Resolution with Universal References}
-		%\subfile{content/chapter-9/9-4.tex}
-		\subsubsection{Perfect Forwarding in Lambdas}
-		%\subfile{content/chapter-9/9-5.tex}
-		\subsubsection{总结}
-		%\subfile{content/chapter-9/9-6.tex}
-	\subsection{Tricky Details of Perfect Forwarding}
-	%\subfile{content/chapter-10/10-0.tex}
-		\subsubsection{Universal References as Non-Forwarding References}
-		%\subfile{content/chapter-10/10-1.tex}
-		\subsubsection{Universal or Ordinary Rvalue Reference?}
-		%\subfile{content/chapter-10/10-2.tex}
-		\subsubsection{How the Standard Specifies Perfect Forwarding}
-		%\subfile{content/chapter-10/10-3.tex}
-		\subsubsection{Nasty Details of Perfect Forwarding}
-		%\subfile{content/chapter-10/10-5.tex}
-		\subsubsection{总结}
-		%\subfile{content/chapter-10/10-6.tex}
-	\subsection{Perfect Passing with auto\&\&}
-	%\subfile{content/chapter-11/11-0.tex}
-		\subsubsection{Default Perfect Passing}
-		%\subfile{content/chapter-11/11-1.tex}
-		\subsubsection{Universal References with auto\&\&}
-		%\subfile{content/chapter-11/11-2.tex}
-		\subsubsection{auto\&\& as Non-Forwarding Reference}
-		%\subfile{content/chapter-11/11-3.tex}
-		\subsubsection{Perfect Forwarding in Lambdas}
-		%\subfile{content/chapter-11/11-4.tex}
-		\subsubsection{Using auto\&\& in C++20 Function Declarations}
-		%\subfile{content/chapter-11/11-5.tex}
-		\subsubsection{总结}
-		%\subfile{content/chapter-11/11-6.tex}
-	\subsection{Perfect Returning with decltype(auto)}
+	\section{Part II: 泛型代码中的移动语义}
+	\subfile{content/2/Part-2.tex}
+	\subsection{9 完美转发}
+	\subfile{content/2/chapter9/0.tex}
+		\subsubsection{9.1 完美转发的动机}
+		\subfile{content/2/chapter9/1.tex}
+		\subsubsection{9.2 实现完美转发}
+		\subfile{content/2/chapter9/2.tex}
+		\subsubsection{9.3 右值引用与通用引用}
+		\subfile{content/2/chapter9/3.tex}
+		\subsubsection{9.4 使用通用引用的重载}		\subfile{content/2/chapter9/4.tex}
+		\subsubsection{9.5 Lambda中的完美转发}
+		\subfile{content/2/chapter9/5.tex}
+		\subsubsection{9.6 总结}
+		\subfile{content/2/chapter9/6.tex}
+	\subsection{10 Tricky Details of Perfect Forwarding}
+	\subfile{content/2/chapter10/0.tex}
+		\subsubsection{10.1 Universal References as Non-Forwarding References}
+		\subfile{content/2/chapter10/1.tex}
+		\subsubsection{10.2 Universal or Ordinary Rvalue Reference?}
+		\subfile{content/2/chapter10/2.tex}
+		\subsubsection{10.3 How the Standard Specifies Perfect Forwarding}
+		\subfile{content/2/chapter10/3.tex}
+		\subsubsection{10.4 Nasty Details of Perfect Forwarding}
+		\subfile{content/2/chapter10/4.tex}
+		\subsubsection{10.5 总结}
+		\subfile{content/2/chapter10/5.tex}
+	\subsection{11 Perfect Passing with auto\&\&}
+	\subfile{content/2/chapter11/0.tex}
+		\subsubsection{11.1 Default Perfect Passing}
+		\subfile{content/2/chapter11/1.tex}
+		\subsubsection{11.2 Universal References with auto\&\&}
+		\subfile{content/2/chapter11/2.tex}
+		\subsubsection{11.3 auto\&\& as Non-Forwarding Reference}
+		\subfile{content/2/chapter11/3.tex}
+		\subsubsection{11.4 Perfect Forwarding in Lambdas}
+		\subfile{content/2/chapter11/4.tex}
+		\subsubsection{11.5 Using auto\&\& in C++20 Function Declarations}
+		\subfile{content/2/chapter11/5.tex}
+		\subsubsection{11.6 总结}
+		\subfile{content/2/chapter11/6.tex}
+	\subsection{12 Perfect Returning with decltype(auto)}
 	%\subfile{content/chapter-12/12-0.tex}
-		\subsubsection{Perfect Returning}
+		\subsubsection{12.1 Perfect Returning}
 		%\subfile{content/chapter-12/12-1.tex}
-		\subsubsection{decltype(auto)}
+		\subsubsection{12.2 decltype(auto)}
 		%\subfile{content/chapter-12/12-2.tex}
-		\subsubsection{总结}
+		\subsubsection{12.3 总结}
 		%\subfile{content/chapter-12/12-8.tex}
 		
 	\section{Part III: Move Semantics in the C++ Standard Library}
-	\subsection{Move-Only Types}
+	\subsection{13 Move-Only Types}
 	%\subfile{content/chapter-13/13-0.tex}
-		\subsubsection{Declaring and Using Move-Only Types}
+		\subsubsection{13.1 Declaring and Using Move-Only Types}
 		%\subfile{content/chapter-13/13-1.tex}
-		\subsubsection{总结}
+		\subsubsection{13.2 总结}
 		%\subfile{content/chapter-13/13-10.tex}
-	\subsection{Moving Algorithms and Iterators}
+	\subsection{14 Moving Algorithms and Iterators}
 	%\subfile{content/chapter-14/14-0.tex}
-		\subsubsection{Moving Algorithms}
+		\subsubsection{14.1 Moving Algorithms}
 		%\subfile{content/chapter-15/15-1.tex}
-		\subsubsection{Removing Algorithms}
+		\subsubsection{14.2 Removing Algorithms}
 		%\subfile{content/chapter-15/15-2.tex}
-		\subsubsection{Move Iterators}
+		\subsubsection{14.3 Move Iterators}
 		%\subfile{content/chapter-15/15-3.tex}
-		\subsubsection{总结}
+		\subsubsection{14.4 总结}
 		%\subfile{content/chapter-15/15-5.tex}
-	\subsection{Move Semantics in Types of the C++ Standard Library}
+	\subsection{15 Move Semantics in Types of the C++ Standard Library}
 	%\subfile{content/chapter-15/0.tex}
-		\subsubsection{Move Semantics for Strings}
+		\subsubsection{15.1 Move Semantics for Strings}
 		%\subfile{content/chapter-15/1.tex}
-		\subsubsection{Move Semantics for Containers}
+		\subsubsection{15.2 Move Semantics for Containers}
 		%\subfile{content/chapter-15/2.tex}
-		\subsubsection{Move Semantics for Vocabulary Types}
+		\subsubsection{15.3 Move Semantics for Vocabulary Types}
 		%\subfile{content/chapter-15/3.tex}
-		\subsubsection{Move Semantics for Smart Pointers}
+		\subsubsection{15.4 Move Semantics for Smart Pointers}
 		%\subfile{content/chapter-15/4.tex}
-		\subsubsection{Move Semantics for IOStreams}
+		\subsubsection{15.5 Move Semantics for IOStreams}
 		%\subfile{content/chapter-15/5.tex}
-		\subsubsection{Move Semantics for Multithreading}
+		\subsubsection{15.6 Move Semantics for Multithreading}
 		%\subfile{content/chapter-15/6.tex}
-		\subsubsection{总结}
+		\subsubsection{15.7 总结}
 		%\subfile{content/chapter-15/6.tex}
 \end{document}

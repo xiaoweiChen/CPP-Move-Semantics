@@ -1,0 +1,106 @@
+我们了解了移动语义不能自动传递，所以这对泛型代码会有影响。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{9.1.1 为什么需要完美转发}
+
+要将带有移动语义的对象转发给函数，不仅必须绑定到rvalue引用，而且需要再次使用std::move()将其移动语义转发给另一个函数。\par
+
+例如，引用重载函数的规则解析:\par
+
+\begin{lstlisting}[caption={}]
+class X {
+	...
+};
+
+// forward declarations:
+void foo(const X&); // for constant values (read-only access)
+void foo(X&); // for variable values (out parameters)
+void foo(X&&); // for values that are no longer used (move semantics)
+\end{lstlisting}
+
+当调用这些函数时，有以下规则:\par
+
+\begin{lstlisting}[caption={}]
+X v;
+const X c;
+
+foo(v); // calls foo(X&)
+foo(c); // calls foo(const X&)
+foo(X{}); // calls foo(X&&)
+foo(std::move(v)); // calls foo(X&&)
+foo(std::move(c)); // calls foo(const X&)
+\end{lstlisting}
+
+假设通过协助函数callFoo()间接地调用相同的参数foo()。函数还需要三个重载:\par
+
+\begin{lstlisting}[caption={}]
+void callFoo(const X& arg) { // arg binds to all const objects
+	foo(arg); // calls foo(const X&)
+}
+void callFoo(X& arg) { // arg binds to lvalues
+	foo(arg); // calls foo(X&)
+}
+void callFoo(X&& arg) { // arg binds to rvalues
+	foo(std::move(arg)); // needs std::move() to call foo(X&&)
+}
+\end{lstlisting}
+
+这里，arg都用作左值(具有名称的对象)。第一个版本将其作为const对象转发，但其他两种情况实现了转发非const参数的两种不同方式:\par
+
+\begin{itemize}
+	\item 声明为lvalue引用(绑定到没有移动语义的对象)的参数按原样传递。
+	\item 声明为rvalue引用(绑定到具有移动语义的对象)的参数通过std::move()传递。
+\end{itemize}
+
+这允许我们完美地转发移动语义:对于任何通过移动语义传递的参数，保持移动语义。当遇到没有移动语义的参数时，不添加移动语义。\par
+
+看下callFoo()如何调用不同的foo():\par
+
+\begin{lstlisting}[caption={}]
+X v;
+const X c;
+callFoo(v); // calls foo(X&)
+callFoo(c); // calls foo(const X&)
+callFoo(X{}); // calls foo(X&&)
+callFoo(std::move(v)); // calls foo(X&&)
+callFoo(std::move(c)); // calls foo(const X&)
+\end{lstlisting}
+
+请记住，传递给rlvalue引用的rvalue在使用时成为lvalue，这意味着需要std::move()再次将其作为rvalue传递。但是，不能在任何地方使用std::move()。对于其他重载，当传递rvalue时，使用std::move()将调用foo()的重载实现来获取rvalue引用。\par
+
+为了在泛型代码中实现完美转发，需要为每个参数进行重载。为了支持所有组合，这意味着对2个泛型参数有9个重载，对3个泛型参数有27个重载。\par
+
+因此，C++11引入了一种特殊的方式来完美地转发给定的参数，而不需要任何重载，但仍然保持类型和具体值。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{完美转发const rvalue引用}
+
+虽然const rvalue引用没有语义上的含义，但如果想要用std::move()标记的常量对象的类型和值，还需要第四个重载:\par
+
+\begin{lstlisting}[caption={}]
+void callFoo(const X&& arg) { // arg binds to const rvalues
+	foo(std::move(arg)); // needs std::move() to call foo(const X&&)
+}
+\end{lstlisting}
+
+否则，将调用foo(const X\&)。这通常没问题的，但在某些情况下，可能希望保留传递const rvalue引用的信息(例如，出于任何原因，提供了foo(const X\&\&)重载)。\par
+
+有了完美转发的特性，泛型代码就没必要为了对两个或三个参数，进行16和64次重载了。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
