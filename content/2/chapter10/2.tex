@@ -1,0 +1,242 @@
+我们对普通rvalue引用和通用/转发引用使用相同的语法，这为对象是普通rvalue引用还是通用引用带来了一些有趣的情况。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.2.1 泛型类型成员的rvalue引用}
+
+对模板形参的成员类型的rvalue引用不是通用引用。\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void foo(typename T::value_type&& arg); // not a universal reference
+\end{lstlisting}
+
+这里有一个完整的例子:\par
+
+{\color{red}{generic/universalmem.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <string>
+#include <vector>
+
+template<typename T>
+void insert(T& coll, typename T::value_type&& arg)
+{
+	coll.push_back(arg);
+}
+
+int main()
+{
+	std::vector<std::string> coll;
+	...
+	insert(coll, std::string{"prvalue"}); // OK
+	...
+	std::string str{"lvalue"};
+	insert(coll, str); // ERROR: T::value_type&& is not a universal reference
+	insert(coll, std::move(str)); // OK
+	...
+}
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.2.2 类模板中参数的rvalue引用}
+
+对类模板的模板形参的rvalue引用不是通用引用。\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+class C {
+	T&& member; // member is not a universal reference
+	...
+	void foo(T&& arg); // arg is not a universal reference
+};
+\end{lstlisting}
+
+这里有一个完整的例子:\par
+
+{\color{red}{generic/universalclass.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <string>
+#include <vector>
+
+template<typename T>
+class Coll {
+private:
+	std::vector<T> values;
+public:
+	Coll() = default;
+	
+	// function in class template:
+	void insert(T&& val) {
+		values.push_back(val);
+	}
+};
+
+int main()
+{
+	Coll<std::string> coll;
+	...
+	coll.insert(std::string{"prvalue"}); // OK
+	std::string str{"lvalue"};
+	coll.insert(str); // ERROR: T&& of Coll<T> is not a universal reference
+	coll.insert(std::move(str)); // OK
+	...
+}
+\end{lstlisting}
+
+通常，类模板中的函数不遵循函数模板规则。就是temploid，泛型代码，在实例化类时遵循普通函数的规则。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.2.3 完全特化中参数的rvalue引用}
+
+对函数模板的完全特化的形参的rvalue引用不是通用引用。\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T> // primary template
+void foo(T&& arg); // - arg is a universal reference
+...
+template<> // full specialization (for rvalues only)
+void foo(std::string&& arg); // - arg is not a universal reference
+\end{lstlisting}
+
+对于std::string类型的lvalue，仍然会调用主模板。要特化std::string的主模板的所有情况，必须提供第二个全特化版本:\par
+
+\begin{lstlisting}[caption={}]
+template<> // full specialization (for lvalues)
+void foo(std::string& arg);
+\end{lstlisting}
+
+这是一个完整的例子:\par
+
+{\color{red}{generic/universalspec.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <string>
+#include <vector>
+
+// primary template taking a universal reference:
+template<typename Coll, typename T>
+void insert(Coll& coll, T&& arg)
+{
+	std::cout << "primary template for type T called\n";
+	coll.push_back(arg);
+}
+
+// full specialization for rvalues of type std::string:
+template<>
+void insert(std::vector<std::string>& coll, std::string&& arg)
+{
+	std::cout << "full specialization for type std::string&& called\n";
+	coll.push_back(arg);
+}
+
+// full specialization for lvalues of type std::string:
+template<>
+void insert(std::vector<std::string>& coll, const std::string& arg)
+{
+	std::cout << "full specialization for type const std::string& called\n";
+	coll.push_back(arg);
+}
+
+int main()
+{
+	std::vector<std::string> coll;
+	...
+	insert(coll, std::string{"prvalue"}); // calls full specialization for rvalues
+	std::string str{"lvalue"};
+	insert(coll, str); // calls full specialization for lvalues
+	insert(coll, std::move(str)); // calls full specialization for rvalues
+	...
+}
+\end{lstlisting}
+
+注意，必须在类定义之外声明/定义成员函数模板的全特化:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+class Cont {
+	...
+	// primary template:
+	template<typename U>
+	void insert(U&& v) { // universal reference
+		coll.push_back(std::forward<U>(v));
+	}
+	...
+};
+
+// full specializations for Cont<T>::insert<>():
+// - have to be outside the class
+// - need specializations for rvalues and lvalues
+
+template<>
+  template<>
+void Cont<std::string>::insert<>(std::string&& v)
+{
+	coll.push_back(std::move(v));
+}
+
+template<>
+  template<>
+void Cont<std::string>::insert<>(const std::string& v)
+{
+	coll.push_back(v);
+}
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

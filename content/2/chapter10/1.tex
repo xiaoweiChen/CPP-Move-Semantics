@@ -1,0 +1,305 @@
+有一些通用引用(也称为转发引用)的应用与转发无关，因为可以绑定所有对象，同时仍然知道值的类别和/或对象是否为const，还有其他收益。\par
+
+本章中，我们将讨论一些例子。介绍了第二种通用引用auto\&\&之后，我们将讨论使用通用引用作为非转发引用的实际示例。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.1.1 通用引用和const}
+
+根据绑定引用的正式规则，通用引用是将引用绑定到任何值类别的对象，并需要保持其为const的唯一方法。另一个绑定到所有对象的引用是const\&，但丢失了传递的参数是否为const的信息。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{转发常量}
+
+如果我们想避免重载，但又希望对const和非const参数有不同的行为，并支持所有值类别，就必须使用通用引用。\par
+
+考虑以下例子:\par
+
+{\color{red}{generic/universalconst.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <string>
+
+void iterate(std::string::iterator beg, std::string::iterator end)
+{
+	std::cout << "do some non-const stuff with the passed range\n";
+}
+
+void iterate(std::string::const_iterator beg, std::string::const_iterator end)
+{
+	std::cout << "do some const stuff with the passed range\n";
+}
+
+template<typename T>
+void process(T&& coll)
+{
+	iterate(coll.begin(), coll.end());
+}
+
+int main()
+{
+	std::string v{"v"};
+	const std::string c{"c"};
+	
+	process(v); // coll binds to a non-const lvalue, iterators passed
+	process(c); // coll binds to a const lvalue, const_iterators passed
+	process(std::string{"t"}); // coll binds to a non-const prvalue, iterators passed
+	process(std::move(v)); // coll binds to a non-const xvalue, iterators passed
+	process(std::move(c)); // coll binds to a const xvalue , const_iterators passed
+}
+\end{lstlisting}
+
+该程序有以下输出:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+do some non-const stuff with the passed range \\
+do some const stuff with the passed range \\
+do some non-const stuff with the passed range \\
+do some non-const stuff with the passed range \\
+do some const stuff with the passed range
+\end{tcolorbox}
+
+代码中，用一个形参声明process()作为对集合(容器、字符串等)的通用引用。与通用引用一样，我们可以传递所有可能值类别的字符串。\par
+
+在process()内部，可以根据实参是否为const，有不同的行为。本例中，我们调用begin()和end()来传递传递的集合，将它们作为一个半开范围传递给遍历所有元素的函数:\par
+
+\begin{lstlisting}[caption={}]
+	template<typename T>
+	void process(T&& coll)
+	{
+		iterate(coll.begin(), coll.end());
+	}
+\end{lstlisting}
+
+但是，我们调用了iterate()函数的不同实现:一个用于iterator(能够修改元素)，另一个用于const\_iterator(不能修改元素)。通用引用保留了传递的const对象，所以调用与传递集合匹配的iterate()。\par
+
+注意，我们在process()内部没有使用(完美)转发。只想通用引用const和非const对象，甚至可以在遍历所有元素后使用coll。\par
+
+您可能会认为，应该知道在迭代元素时是否修改了它们。假设这个泛型函数允许为每个元素调用进行操作，则可以读取或修改元素，因此const的正确性非常重要。\par
+
+注意，这里使用std::forward<>()是有问题的:\par
+
+\begin{lstlisting}[caption={}]
+	template<typename T>
+	void process(T&& coll)
+	{
+		iterate(std::forward<T>(coll).begin(), std::forward<T>(coll).end()); // ???
+	}
+\end{lstlisting}
+
+在两个不同的位置，声明不再需要同一对象是一切麻烦的起源，因为两个位置都可能将此解释为从对象中窃取值的原因。因此，窃取last的位置可能没有获得正确的值。对于同一个对象，永远不要使用std::move()或std::forward<>()两次(除非该对象在第二次使用之前被重新初始化)。\par
+
+在这里只使用std::forward<>()一次也是一个麻烦，因为我们没有保证函数调用参数的求值顺序:\par
+
+\begin{lstlisting}[caption={}]
+	template<typename T>
+	void process(T&& coll)
+	{
+		iterate(coll.begin(), std::forward<T>(coll).end()); // ???
+	}
+\end{lstlisting}
+
+在这个特定的例子中，使用std::forward<>()一次或两次可能有效，因为begin()和end()不会从传递的对象中窃取/修改值。但是，除非您确切地知道如何使用这些信息，否则这就是一个错误。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.1.2 通用引用的细节}
+
+前面的示例演示了将参数声明为通用引用比将其完全转发给另一个函数更有用。让我们进一步分析一下。\par
+
+考虑以下声明:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void foo(T&& arg) {
+	...
+}
+\end{lstlisting}
+
+当声明arg时，有一个引用，它可以统一地绑定到所有类型和值类别。对于非const对象v和const对象c，类型T和参数类型推导如下:\par
+
+\begin{table}[H]
+	\begin{tabular}{lll}
+		& T            & arg            \\
+		foo(v)        & Type\&       & Type\&         \\
+		foo(c)        & const Type\& & const Type\&   \\
+		foo(Type\{\}) & Type         & Type\&\&       \\
+		foo(move(v))  & Type         & Type\&\&       \\
+		foo(move(c))  & const Type   & cosnt Type\&\&
+	\end{tabular}
+\end{table}
+
+关于传递的参数的信息拆分如下:\par
+
+\begin{itemize}
+	\item \textit{arg}知道值及其类型，包括是否为const。如果传递了lvalue，则为lvalue引用;如果传递了rvalue，则为rvalue引用。
+	\item \textit{T}类型拥有关于传递参数的值类别的一些信息(是传递lvalue还是rvalue)。根据特定模板类型的演绎规则，如果传递了一个lvalue，T就是一个lvalue引用;否则，T不是一个引用。
+\end{itemize}
+
+调用std::forward<t>(arg)将所有信息再次集合在一起，以恢复常量和值类别，以完美地转发传递的参数及其当前值。但是，如果不需要传递参数的值类别来实现完美转发，则不需要std::forward<>()。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{依赖常量的代码}
+
+如果只需要知道传递的参数是否为const，可以同时使用arg和t:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void foo(T&& arg)
+{
+	if constexpr(std::is_const_v<std::remove_reference_t<T>>) {
+		... // passed argument is const
+	}
+	else {
+		... // passed argument is not const
+	}
+}
+\end{lstlisting}
+
+这里，我们使用if constexpr (C++17引入的编译时if)根据传递的实参是否为const来执行不同的操作。\par
+
+注意，在检查T的一致性之前，使用std::remove\_reference<>来删除对T的引用是很重要的。const类型的引用不是整体的const:\par
+
+\begin{lstlisting}[caption={}]
+std::is_const_v<int> // false
+std::is_const_v<const int> // true
+std::is_const_v<const int&> // false
+std::is_const_v<std::remove_reference_t<const int&>> // true
+\end{lstlisting}
+
+说些你可能不知道的:\par
+
+\begin{itemize}
+	\item std::remove\_reference\_t<T> (自C++14可用)是std::remove\_reference<T>::type的缩写。
+	\item std::is\_const\_v<T> (自C++17可用)是std::is\_const<T>::value的缩写。
+\end{itemize}
+
+\hspace*{\fill} \par %插入空行
+\textbf{依赖值类别的代码}
+
+通过使用T，可以获得/检查关于传递的值类别的信息(至少是传递了lvalue还是rvalue)。例如:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void foo(T&& arg)
+{
+	if constexpr(std::is_lvalue_reference_t<T>) {
+		... // passed argument is lvalue (has no move semantics)
+	}
+	else {
+		... // passed argument is rvalue (has move semantics)
+	}
+}
+\end{lstlisting}
+
+有时这样的检查是必要的(例如，根据传递的是lvalue还是rvalue来不同地处理子对象)。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.1.3 特定类型的通用引用}
+
+普通rvalue引用和通用引用共享相同的语法，这导致了多个问题。这不仅不确定我们有什么，还不能声明特定类型的通用引用。\par
+
+例如，一个声明为使用通用引用的函数:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void processString(T&& arg);
+\end{lstlisting}
+
+%根据这个声明，arg可以有任何类型。这个函数可以调用该模板支持操作对的所有参数。\par
+
+希望将该函数限制为只接受字符串(const和非const都可以，且不丢失信息)，但并非轻易就能做到。\par
+
+因为C++20，用关键字require来约束对特定类型的通用引用成为可能。但是，必须决定是否支持，以及支持哪种类型的类型转换:\par
+
+\begin{itemize}
+	\item 当类型必须匹配时(不允许隐式转换):\par
+	\begin{lstlisting}[caption={}]
+		template<typename T>
+		requires std::is_same_v<std::remove_cvref_t<T>, std::string>
+		void processString(T&&) {
+			...
+		}
+	\end{lstlisting}
+	\item 允许隐式转换:\par
+	\begin{lstlisting}[caption={}]
+	template<typename T>
+	requires std::is_convertible_v<T, std::string>
+	void processString(T&&) {
+		...
+	}
+	\end{lstlisting}
+	\item 允许显式转换:
+	\begin{lstlisting}[caption={}]
+	template<typename T>
+	requires std::is_constructible_v<std::string, T>
+	void processString(T&&) {
+		...
+	}
+	\end{lstlisting}
+\end{itemize}
+
+通常，std::is\_convertible是想要的，因为它符合函数调用的通常规则。注意，std::is\_convertible和std::is\_constructible的转换顺序与源类型和目标类型相反。\par
+
+请参考generic/universaltype.cpp以获得所有情况的完整示例。\par
+
+C++20之前，需要enable\_if<>类型特征，而不是require，并且不支持类型特征带有\_v和\_t后缀的缩写形式。例如，以下代码支持(自C++11起)隐式转换为std::string的所有类型:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T,
+typename = typename std::enable_if<
+std::is_convertible<T, std::string>::value
+>::type>
+
+void processString(T&& args);
+\end{lstlisting}
+
+要在C++11中限制为std::string类型，我们需要:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T,
+typename = typename std::enable_if<
+std::is_same<typename std::decay<T>::type,
+				std::string
+			>::value
+		>::type>
+
+void processString(T&& arg);
+\end{lstlisting}
+
+这里，类型trait std::decay<>用于从类型T中移除引用和一致性(类型trait std::remove\_cvref<>只在C++20后可用)。\par
+
+以类似的方式，我们可以约束泛型代码，让通用引用只绑定到rvalue。但是，如果我们有通用引用的特定语法，那么这些都不需要。例如:\par
+
+\begin{lstlisting}[caption={}]
+void processString(std::string&&& arg); // assume &&& declares a universal reference
+\end{lstlisting}
+
+但是，我们没有这种语法，现在我们两个程序都使用的是\&\&。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

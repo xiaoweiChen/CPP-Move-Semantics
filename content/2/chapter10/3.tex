@@ -1,0 +1,256 @@
+为了理解完美转发的所有规则，来看看这些规则是如何在C++标准中指定的。\par
+
+同样，有以下声明:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void f(T&& arg) // arg is universal/forwarding reference
+{
+	g(std::forward<T>(arg)); // perfectly forward (move() only for passed rvalues)
+}
+\end{lstlisting}
+
+通常，T只有传递参数的类型:\par
+
+\begin{lstlisting}[caption={}]
+MyType v;
+
+f(MyType{}); // T is deduced as MyType, so arg is declared as MyType&&
+f(std::move(v)); // T is deduced as MyType, so arg is declared as MyType&&
+\end{lstlisting}
+
+然而，对于通用引用传递lvalue，有一个特殊的规则(参见C++标准的[temp.debit.call]节):\par
+
+如果形参类型是对cv-非限定模板形参的右值引用，实参是lvalue，类型“对T的lvalue引用”将用来代替T进行类型推断。\par
+
+\par
+
+这意味着在这种情况下:\par
+
+\begin{itemize}
+	\item 如果形参的类型是用\&\&声明的，而不是用const或volatile声明的
+	\item 并且传递的是一个lavlue
+	\item 那么将T推导为T\&。
+\end{itemize}
+
+我们的例子:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void f(T&& arg); // arg is a universal/forwarding reference
+
+MyType v;
+const MyType c;
+
+f(v); // T is deduced as MyType&
+f(c); // T is deduced as const MyType&
+\end{lstlisting}
+
+但我们已经将arg声明为T\&\&。如果T是T\&，那这里C++的引用折叠规则(参见[dcl.]一节。参考]的C++标准)给出了一个答案:\par
+
+\begin{itemize}
+	\item Type\& \& 成为 Type\&
+	\item Type\& \&\& 成为 Type\&
+	\item Type\&\& \& 成为 Type\&
+	\item Type\&\& \&\& 成为 Type\&\&
+\end{itemize}
+
+这意味着:\par
+
+\begin{lstlisting}[caption={}]
+MyType v;
+const MyType c;
+
+f(v); // T is deduced as MyType& and arg has this type
+f(c); // T is deduced as const MyType& and arg has this type
+\end{lstlisting}
+
+现在考虑一下std::forward<>()是如何定义的，与std::move()相反:\par
+
+\begin{itemize}
+	\item std::move()总是将类型转换为rvalue引用:
+	\begin{lstlisting}[caption={}]
+	static_cast<remove_reference_t<T>&&>(t)
+	\end{lstlisting}
+	它删除引用并转换为相应的rvalue引用类型(删除任何\&并添加\&\&)。
+	\item std::forward<>()只向传递的类型参数添加rvalue引用:
+	\begin{lstlisting}[caption={}]
+	static_cast<T&&>(t)
+	\end{lstlisting}
+	引用折叠规则再次适用:
+	\begin{itemize}
+		\item[-] 如果类型T是一个lvalue引用，T\&\&仍然是一个lvalue引用(\&\&无效)。因此，我们将arg强制转换为lvalue引用，这意味着arg没有移动语义。
+		\item[-] 但是，如果T是一个rvalue引用(或者根本不是一个引用)，T\&\&(仍然)是一个rvalue引用。因此，将arg强制转换为rvalue引用，这样就将值类别更改为xvalue，这是std::move()的效果。
+	\end{itemize}
+\end{itemize}
+
+因此，我们得到:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void f(T&& arg) // arg is a universal/forwarding reference
+{
+	g(std::forward<T>(arg)); // perfectly forward (move() only for passed rvalues)
+}
+
+MyType v;
+const MyType c;
+
+f(v); // T and arg are MyType&, forward() has no effect in this case
+f(c); // T and arg are const MyType&, forward() has no effect in this case
+f(MyType{}); // T is MyType, arg is MyType&&, forward() is equivalent to move()
+f(std::move(v)); // T is MyType, arg is MyType&&, forward() is equivalent to move()
+\end{lstlisting}
+
+注意，字符串字面值是rvalue，因此我们可以推导出的T和arg:\par
+
+\begin{lstlisting}[caption={}]
+f("hi"); // lvalue passed, so T and arg have type const char(&)[3]
+f(std::move("hi")); // xvalue passed, so T is deduced as const char[3]
+// and arg has type const char(&&)[3]
+\end{lstlisting}
+
+还请记住，对函数的引用总是lvalue，因此，如果将对函数的引用传递给通用引用，那么T总是推断为lvalue引用:\par
+
+\begin{lstlisting}[caption={}]
+void func(int) {
+}
+f(func); // lvalue passed to f(), so T and arg have type void(&)(int)
+f(std::move(func)); // lvalue passed to f(), so T and arg have type void(&)(int)
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.3.1 通用引用类型的说明}
+
+声明通用/转发引用时，还可以显式指定模板形参的类型，而不是推导。但是，请记住参数声明为T\&\&。因此，可以有以下行为:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void f(T&& arg) // arg is universal/forwarding reference
+{
+	g(std::forward<T>(arg)); // perfectly forward (move() only for passed rvalues)
+}
+
+f<std::string>( ... ); // arg is a raw rvalue reference binding to rvalues only
+f<std::string&>( ... ); // arg is an lvalue reference binding to non-const lvalues only
+f<const std::string&>( ... ); // arg is a const lvalue reference binding to everything
+f<std::string&&>( ... ); // arg is a raw rvalue reference binding to rvalues only
+\end{lstlisting}
+
+因此，有了明确的规范，通用引用不再作为通用引用。作为调用者，可以指定获得的引用的具体类型。\par
+
+因此，要传递一个lvalue(这里仍然需要值)，请确保将模板参数指定为lvalue引用。否则，代码将无法编译:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void f(T&& arg) // arg is universal/forwarding reference
+{
+	g(std::forward<T>(arg)); // perfectly forward (move() only for passed rvalues)
+}
+
+std::string s;
+...
+f<std::string>(s); // ERROR: cannot bind rvalue reference to lvalue
+f<std::string&>(s); // OK, does not move and forward s
+f<std::string>(std::move(s)); // OK, does move and forward s
+f<std::string&&>(std::move(s)); // OK, does move and forward s
+\end{lstlisting}
+
+最后两个调用是等价的。\par
+
+这些规则同样适用于使用C++20特性，在声明普通函数时使用auto\&\&:\par
+
+\begin{lstlisting}[caption={}]
+void f(auto&& arg) {
+	g(std::forward<decltype(arg)>(arg));
+}
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.3.2 与通用引用冲突的模板参数推断}
+
+推导通用引用模板参数的特殊规则(当传递lvalue时，将类型作为lvalue引用进行推导)可能会导致看似正确的代码出现意外错误。\par
+
+以下代码无法编译时，程序员通常会感到惊讶:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void insert(std::vector<T>& vec, T&& elem)
+{
+	vec.push_back(std::forward<T>(elem));
+}
+
+std::vector<std::string> coll;
+std::string s;
+...
+insert(coll, s); // ERROR: no matching function call
+\end{lstlisting}
+
+问题是两个参数都可以推导出参数T，但推导出的类型不一样:\par
+
+\begin{itemize}
+	\item 使用参数coll, T将其推导为std::string。
+	\item 但是，根据通用引用的特殊规则，参数elem会强制将T推导为std::string\&。
+\end{itemize}
+
+因此，编译器会产生歧义错误。\par
+
+有两种方法可以解决这个问题:\par
+
+\begin{itemize}
+	\item 可以使用std::remove\_reference<>:
+	\begin{lstlisting}[caption={}]
+	template<typename T>
+	void insert(std::vector<std::remove_reference_t<T>>& vec, T&& elem)
+	{
+		vec.push_back(std::forward<T>(elem));
+	}
+	std::vector<std::string> coll;
+	std::string s;
+	...
+	insert(coll, s); // OK, with T deduced as std::string& vec now binds to coll
+	\end{lstlisting}
+	\item 可以使用两个模板参数:
+	\begin{lstlisting}[caption={}]
+	template<typename T1, typename T2>
+	void insert(std::vector<T1>& vec, T2&& elem)
+	{
+		vec.push_back(std::forward<T2>(elem));
+	}
+	\end{lstlisting}
+	或者只是:\par
+	\begin{lstlisting}[caption={}]
+	template<typename Coll, typename T>
+	void insert(Coll& coll, T&& elem)
+	{
+		coll.push_back(std::forward<T>(elem));
+	}
+	\end{lstlisting}
+\end{itemize}
+
+\hspace*{\fill} \par %插入空行
+\textbf{10.3.3 泛型类型的纯rvalue引用}
+
+通过导出通用引用的模板形参的特殊规则(当传递左值时，将类型作为lvalue引用)，可以约束泛型引用形参仅绑定到rvalue:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+requires (!std::is_lvalue_reference_v<T>) // bind to rvalues only
+void callFoo(T&& arg) {
+	foo(std::forward<T>(arg));
+}
+\end{lstlisting}
+
+C++20之前，必须对类型特征再次使用std::enable\_if<>:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T,
+	typename
+		= typename std::enable_if<!std::is_lvalue_reference<T>::value
+			>::type>
+void callFoo(T&& arg) {
+	foo(std::forward<T>(arg));
+}
+\end{lstlisting}
+
+
