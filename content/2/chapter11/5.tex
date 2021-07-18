@@ -1,0 +1,67 @@
+因为C++20，也可以用auto\&\&来声明普通函数，处理方式是一样的:用通用引用来声明函数模板。\par
+
+如下定义:\par
+
+\begin{lstlisting}[caption={}]
+void callFoo(auto&& val) {
+	foo(std::forward<decltype(arg)>(arg));
+}
+\end{lstlisting}
+
+相当于:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void callFoo(T&& val) {
+	foo(std::forward<decltype(arg)>(arg));
+}
+\end{lstlisting}
+
+这意味着还可以在这里显式地指定参数的类型。然而，与普通函数模板一样，必须用适合所传递参数的值类别的类型来限定模板形参:\par
+
+\begin{lstlisting}[caption={}]
+std::string s;
+...
+callFoo<std::string>(s); // ERROR: cannot bind rvalue reference to lvalue
+callFoo<std::string&>(s); // OK, does not move and forward s
+callFoo<std::string>(std::move(s)); // OK, does move and forward s
+callFoo<std::string&&>(std::move(s)); // OK, does move and forward s
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

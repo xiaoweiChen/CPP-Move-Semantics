@@ -1,0 +1,164 @@
+但是，在泛型代码中，如何在传递返回值的同时，仍然保持其类型和值类别?\par
+
+答案是需要通用/转发引用，但没有声明为参数。为此，我们需要auto\&\&。\par
+
+对外调用时这样:\par
+
+\begin{lstlisting}[caption={}]
+// pass return value of compute() to process():
+process(compute(t)); // OK, uses perfect forwarding of returned value
+\end{lstlisting}
+
+还可以实现以下功能:\par
+
+\begin{lstlisting}[caption={}]
+// pass return value of compute() to process() with some delay:
+auto&& ret = compute(t); // initialize a universal reference with the return value
+...
+process(std::forward<decltype(ret)>(ret)); // OK, uses perfect forwarding of returned value
+\end{lstlisting}
+
+或者，当使用大括号初始化时:\par
+
+\begin{lstlisting}[caption={}]
+// pass return value of compute() to process() with some delay:
+auto&& ret{compute(t)}; // initialize a universal reference with the return value
+...
+process(std::forward<decltype(ret)>(ret)); // OK, uses perfect forwarding of returned value
+\end{lstlisting}
+
+请参阅generic/perfectautorefref.cpp以获得所有情况下的完整示例。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{11.2.1 auto\&\&的类型定义}
+
+用auto\&\&声明时，也声明了一个通用引用。定义一个绑定到所有值类别的引用，该引用的类型保留其初始值的类型和值类别。\par
+
+如果声明\par
+
+\begin{lstlisting}[caption={}]
+auto&& ref{ ... }; // ref is a universal/forwarding reference
+\end{lstlisting}
+
+类型ref是根据函数模板参数的通用引用类型推导出来的:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void callFoo(T&& ref); // ref is a universal/forwarding reference
+\end{lstlisting}
+
+根据规则，ref(即auto\&\&或T\&\&类型)的类型是\par
+
+\begin{itemize}
+	\item 如果引用lvalue，则为lvalue引用
+	\item 如果引用rvalue，则为rvalue引用
+\end{itemize}
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+// forward declarations:
+std::string retByValue();
+std::string& retByRef();
+std::string&& retByRefRef();
+const std::string& retByConstRef();
+const std::string&& retByConstRefRef();
+
+// deduced auto&& types:
+std::string s;
+auto&& r1{s}; // std::string&
+auto&& r2{std::move(s)}; // std::string&&
+
+auto&& r3{retByValue()}; // std::string&&
+auto&& r4{retByRef()}; // std::string&
+auto&& r5{retByRefRef()}; // std::string&&
+auto&& r6{retByConstRef()}; // const std::string&
+auto&& r7{retByConstRefRef()}; // const std::string&&
+\end{lstlisting}
+
+当使用rvalue(prvalue或xvalue)初始化用auto\&\&声明的引用时，就声明了一个rvalue引用。例如，当将引用绑定到标记为std::move()的对象或返回的普通值或rvalue引用时，就会出现这种情况。\par
+
+但是，当使用lvalue初始化用auto\&\&声明的引用时，就声明了一个lvalue引用。例如，将引用绑定到已命名的对象或返回lvalue引用的函数的返回值时，就会出现这种情况。\par
+
+因为字符串字面值是lvalue(以字符数组为类型)，所以将通用引用绑定到字符串字面值时，也会得到lvalue引用:\par
+
+\begin{lstlisting}[caption={}]
+auto&& r8{"hello"}; // const char(&)[6]
+\end{lstlisting}
+
+因为对函数的引用总是lvalue，所以将通用引用绑定到函数时，也会得到lvalue引用:\par
+
+\begin{lstlisting}[caption={}]
+std::string foo(int); // forward declaration
+
+auto&& r9{foo}; // lvalue of type std::string(&)(int)
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{11.2.2 完美转发auto\&\&引用}
+
+同样，也可以完美地将传递给通用引用的值作为函数模板形参:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+void callFoo(T&& ref) {
+	foo(std::forward<T>(ref)); // becomes foo(std::move(ref)) for passed rvalues
+}
+\end{lstlisting}
+
+我们完全可以转发auto\&\&的通用引用:\par
+
+\begin{lstlisting}[caption={}]
+auto&& ref{ ... };
+
+foo(std::forward<decltype(ref)>(ref)); // becomes foo(std::move(ref)) for rvalues
+\end{lstlisting}
+
+记住表达式std::forward<decltype(ref)>(ref)是这样实现的:\par
+
+\begin{itemize}
+	\item 如果传递的decltype(ref)类型是一个lvalue引用，如果ref是用返回的lvalue引用初始化的，则表达式将ref强制转换为lvalue引用，这意味着ref传递时没有移动语义。
+	\item 如果传递的decltype(ref)类型是rvalue引用，如果ref是用返回的普通值或rvalue引用初始化的，则表达式将ref转换为rvalue引用，这是std::move(ref)的效果。
+\end{itemize}
+
+因此，如果用函数的返回值初始化通用引用:\par
+
+\begin{lstlisting}[caption={}]
+auto&& ret{compute(t)}; // initialize a universal reference with the return value
+\end{lstlisting}
+
+表达式为\par
+
+\begin{lstlisting}[caption={}]
+process(std::forward<decltype(ret)>(ret)); // perfectly forward the return value
+\end{lstlisting}
+
+当且仅当compute()返回rvalue(如临时对象或rvalue引用)时，扩展为\par
+
+\begin{lstlisting}[caption={}]
+process(std::move(ret));
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,100 @@
+如果想要完美地转发通用Lambda的参数，还必须使用通用引用和std::forward<>()。但现在只需使用auto\&\&来声明通用引用。\par
+
+考虑这个例子，我们已经有了一个函数模板:\par
+
+\begin{lstlisting}[caption={}]
+auto callFoo = [](auto&& arg) { // arg is a universal/forwarding reference
+	foo(std::forward<decltype(arg)>(arg)); // perfectly forward arg
+};
+
+std::string s{"BLM"};
+callFoo(s); // OK, arg is std::string&
+callFoo(std::move(s)); // OK, arg is std::string&&
+\end{lstlisting}
+
+注意，在C++20中，可以通过用模板形参声明Lambda来避免使用decltype(arg)。\par
+
+下面的泛型Lambda使用此函数完美地转发了可变数量的参数:\par
+
+\begin{lstlisting}[caption={}]
+[] (auto&&... args) {
+	...
+	foo(std::forward<decltype(args)>(args)...);
+};
+\end{lstlisting}
+
+请记住Lambda只是定义函数对象的一种简单方法(定义了operator()的对象允许它们作为函数使用)。上面的定义扩展为编译器定义的类(闭包类型)，并将通用引用定义为模板形参:\par
+
+\begin{lstlisting}[caption={}]
+class NameDefinedByCompiler {
+	...
+	public:
+	template<typename... Args>
+	auto operator() (Args&&... args) const {
+		...
+		foo(std::forward<decltype(args)>(args)...);
+	}
+};
+\end{lstlisting}
+
+再次注意，用const(或volatile)限定的泛型rvalue引用不是通用引用，这也适用于Lambda。如果形参是用const auto\&\&声明的，只能传递rvalue:\par
+
+\begin{lstlisting}[caption={}]
+auto callFoo = [](const auto&& arg) { // arg is not a universal reference
+	...
+};
+
+const std::string cs{"BLM"};
+callFoo(cs); // ERROR: s is not an rvalue
+callFoo(std::move(cs)); // OK, arg is const std::string&&
+\end{lstlisting}
+
+在Lambda内部，使用std::move()完美地传递传递的参数就足够了。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
