@@ -1,0 +1,312 @@
+就像其他占位符类型auto一样，decltype(auto)是一个占位符类型，它让编译器在初始化时推断出类型。然而，在这种情况下，该类型是根据decltype的规则推导出来的:\par
+
+\begin{itemize}
+	\item 如果用普通名称初始化它或返回普通名称，则返回类型是具有该名称的对象的类型。
+	\item 如果使用表达式初始化或返回表达式，则返回类型为求值表达式的类型和值类别:
+	\begin{itemize}
+		\item[-] 对于\textbf{prvalue}，它只产生它的值类型:type
+		\item[-] 对于\textbf{lvalue}，它将其类型作为lvalue引用:type\&
+		\item[-] 对于\textbf{xvalue}，它将其类型作为rvalue引用:type\&\&
+	\end{itemize}
+\end{itemize}
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+std::string s = "hello";
+std::string& r = s;
+
+// initialized with name:
+decltype(auto) da1 = s; // std::string
+decltype(auto) da2(s); // same
+decltype(auto) da3{s}; // same
+decltype(auto) da4 = r; // std::string&
+
+// initialized with expression:
+decltype(auto) da5 = std::move(s); // std::string&&
+decltype(auto) da6 = s+s; // std::string
+decltype(auto) da7 = s[0]; // char&
+decltype(auto) da8 = (s); // std::string&
+\end{lstlisting}
+
+对于表达式，根据规则，类型推导如下:\par
+
+\begin{itemize}
+	\item 因为std::move(s)是一个xvalue，所以da5是一个rvalue引用。
+	\item 因为字符串的加法操作符按值返回一个新的临时字符串(因此它是一个prvalue)，所以da6是一个普通值类型。
+	\item 因为s[0]返回对第一个字符的lvalue引用，所以它是一个lvalue，并强制da7也是一个lvalue引用。
+	\item 因为(s)是一个lvalue，所以da8是一个lvalue引用。是的，这里的括号会有所不同。
+\end{itemize}
+
+与总是引用的auto\&\&相反，decltype(auto)有时只是一个值(如果用值类型对象的名称或用prvalue表达式初始化)。\par
+
+注意decltype(auto)不能有其他限定符:\par
+
+\begin{lstlisting}[caption={}]
+	decltype(auto) da{s}; // OK
+	const decltype(auto)& da1{s}; // ERROR
+	decltype(auto)* da2{&s}; // ERROR
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{12.2.1 返回类型的decltype(auto)}
+
+当使用decltype(auto)作为返回类型时，使用decltype的规则如下:\par
+
+\begin{itemize}
+	\item 如果表达式返回/产生一个普通值，那么值类别是一个prvalue, decltype(auto)推导出一个值类型。
+	\item 如果表达式返回/产生一个lvalue引用，那么值类别是一个lvalue，decltype(auto)推导出一个lvalue引用。
+	\item 如果表达式返回/产生一个rvalue引用，那么值类别是一个xvalue, decltype(auto)推导出一个rvalue引用。
+\end{itemize}
+
+这正是完美返回所需要的:对于普通值，我们推导一个值;对于引用，我们推导一个相同类型的引用。\par
+
+一个更通用的例子，考虑一个框架的helper函数(在一些初始化或日志记录之后)透明地调用一个函数，就像直接调用它一样:\par
+
+{\color{red}{generic/call.hpp}}
+
+\begin{lstlisting}[caption={}]
+	#include <utility> // for forward<>()
+	template <typename Func, typename... Args>
+	decltype(auto) call (Func f, Args&&... args)
+	{
+		...
+		return f(std::forward<Args>(args)...);
+	}
+\end{lstlisting}
+
+该函数将args声明为一个可变数量的通用引用(也称为转发引用)。通过std::forward<>()，它完美地将这些给定的参数转发给f作为第一个参数传递的函数。因为我们使用decltype(auto)作为返回类型，所以完美地将f()的返回值返回给call()的调用者。因此，可以同时调用按值返回的函数和按引用返回的函数。例如:\par
+
+{\color{red}{generic/call.cpp}}
+
+\begin{lstlisting}[caption={}]
+#include "call.hpp"
+#include <iostream>
+#include <string>
+
+std::string nextString()
+{
+	return "Let's dance";
+}
+
+std::ostream& print(std::ostream& strm, const std::string& val)
+{
+	return strm << "value: " << val;
+}
+
+std::string&& returnArg(std::string&& arg)
+{
+	return std::move(arg);
+}
+
+int main()
+{
+	auto s = call(nextString); // call() returns temporary object
+	
+	auto&& ref = call(returnArg, std::move(s)); // call() returns rvalue reference to s
+	std::cout << "s: " << s << '\n';
+	std::cout << "ref: " << ref << '\n';
+	
+	auto str = std::move(ref); // move value from s and ref to str
+	std::cout << "s: " << s << '\n';
+	std::cout << "ref: " << ref << '\n';
+	std::cout << "str: " << str << '\n';
+	
+	call(print, std::cout, str) << '\n'; // call() returns reference to std::cout
+}
+\end{lstlisting}
+
+当调用\par
+
+\begin{lstlisting}[caption={}]
+	auto s = call(nextString);
+\end{lstlisting}
+
+函数call()调用函数nextString()，不带任何参数，并返回它的返回值来初始化s。\par
+
+当调用\par
+
+\begin{lstlisting}[caption={}]
+	auto&& ref = call(returnArg, std::move(s));
+\end{lstlisting}
+
+函数调用()调用带有std::move()标记的函数returnArg()。returnArg()将传递的参数作为右值引用返回，然后call()完美地返回给调用者来初始化ref。str仍然有它的值并且ref会引用它:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+s: Let's dance \\
+ref: Let's dance
+\end{tcolorbox}
+
+使用\par
+
+\begin{lstlisting}[caption={}]
+auto str = std::move(ref);
+\end{lstlisting}
+
+将s和ref的值都移动到str，得到以下状态:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+s: \\
+ref: \\
+str: Let's dance
+\end{tcolorbox}
+
+当调用\par
+
+\begin{lstlisting}[caption={}]
+call(print, std::cout, ref) << '\n';
+\end{lstlisting}
+
+函数调用()使用std::cout和ref作为完全转发的参数调用print()函数。Print()将传递的流作为lvalue引用返回，然后完美地返回给call()的调用者。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{12.2.2 延迟完美返回}
+
+为了完美地返回之前计算的值，我们必须使用decltype(auto)声明一个局部对象，当且仅当它是一个rvalue引用时，使用std::move()返回它。例如:\par
+
+\begin{lstlisting}[caption={}]
+	template<typename Func, typename... Args>
+	decltype(auto) call(Func f, Args&&... args)
+	{
+		decltype(auto) ret{f(std::forward<Args>(args)...)};
+		...
+		if constexpr (std::is_rvalue_reference_v<decltype(ret)>) {
+			return std::move(ret); // move xvalue returned by f() to the caller
+		}
+		else {
+			return ret; // return the plain value or the lvalue reference
+		}
+	}
+\end{lstlisting}
+
+这个函数中，ret的类型就是f()的完美推导类型。通过使用if constexpr(从C++17起)，可以使用decltype(auto)和decltype两种方式来推导一个类型，如下所示:\par
+
+\begin{itemize}
+	\item 如果ret声明为rvalue引用，decltype(auto)使用表达式std::move(ret)，这是一个xvalue，来推导rvalue引用。因此，将f()返回的值移动到这个函数的调用者。
+	\item 如果ret声明为普通值或lvalue引用，decltype(auto)使用名为ret的类型，这也是一个值类型或lvalue引用类型。
+\end{itemize}
+
+其他的解决方案并不总是有效:\par
+
+\begin{itemize}
+	\item 即使在C++20之前，以下内容也会做正确的事情，但有性能问题:\par
+	\begin{lstlisting}[caption={}]
+		decltype(auto) call( ... )
+		{
+			decltype(auto) ret{f( ... )};
+			...
+			return static_cast<decltype(ret)>(ret); // perfect return but unnecessary copy
+		}
+	\end{lstlisting}
+	事实上，我们总是使用static\_cast<>可能会禁用移动语义和复制备选。对于普通值，这就像在return语句中有一个不必要的std::move()。
+	\item 简单地返回ret并不总是有效的:
+	\begin{lstlisting}[caption={}]
+		decltype(auto) call( ... )
+		{
+			decltype(auto) ret{f( ... )};
+			...
+			return ret; // may be an ERROR
+		}
+	\end{lstlisting}
+	call()的返回类型是正确的。但是，如果f()返回rvalue引用，则不能返回左值ret，因为非const重值引用没有绑定到lvalue。
+	\item 使用auto\&\&来声明ret不起作用，因为你将通过引用返回:
+	\begin{lstlisting}[caption={}]
+		decltype(auto) call( ... )
+		{
+			auto&& ret{f( ... )};
+			...
+			return ret; // fatal runtime error: returns a reference to a local object
+		}
+	\end{lstlisting}
+\end{itemize}
+
+使用decltype(auto)时，不要在返回的名字后面加括号:\par
+
+\begin{lstlisting}[caption={}]
+	decltype(auto) call( ... )
+	{
+		decltype(auto) ret{f( ... )};
+		...
+		if constexpr (std::is_rvalue_reference_v<decltype(ret)>) {
+			return std::move(ret); // move value returned by f() to the caller
+		}
+		else {
+			return (ret); // FATAL RUNTIME ERROR: always returns an lvalue reference
+		}
+	}
+\end{lstlisting}
+
+这样，返回类型decltype(auto)会切换到表达式规则，并总是推断出一个lvalue引用，因为ret是一个lvalue(一个有名称的对象)。\par
+
+如果习惯在return语句中把名字和表达式用括号括起来，那就不要这样做了。若继续括起来，使用decltype(auto)时可能会出现错误。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{12.2.3 完美的Lambda转发和返回}
+
+如果Lambda完美返回，则必须更改它的返回类型。声明如下:\par
+
+\begin{lstlisting}[caption={}]
+	[] (auto f, auto&&... args) {
+		...
+	}
+\end{lstlisting}
+
+代表:\par
+
+\begin{lstlisting}[caption={}]
+	[] (auto f, auto&&... args) -> auto {
+		...
+	}
+\end{lstlisting}
+
+这意味着在默认情况下，Lambda总是按值返回。\par
+
+通过用返回类型decltype(auto)显式声明Lambda，可以实现完美返回:\par
+
+\begin{lstlisting}[caption={}]
+	[] (auto f, auto&&... args) -> decltype(auto) {
+		...
+		return f(std::forward<decltype(args)>(args)...);
+	};
+\end{lstlisting}
+
+对于延迟完美返回，我们需要和前面介绍的一样的技巧:如果返回一个rvalue引用，则必须使用std::move():\par
+
+\begin{lstlisting}[caption={}]
+	[] (auto f, auto&&... args) -> decltype(auto) {
+		decltype(auto) ret = f(std::forward<decltype(args)>(args)...);
+		...
+		if constexpr (std::is_rvalue_reference_v<decltype(ret)>) {
+			return std::move(ret); // move value returned by f() to the caller
+		}
+		else {
+			return ret; // return the value or the lvalue reference
+		}
+	};
+\end{lstlisting}
+
+同样，不要在返回的名称周围加上额外的括号，因为decltype(auto)总是推断为lvalue引用:\par
+
+\begin{lstlisting}[caption={}]
+	[] (auto f, auto&&... args) -> decltype(auto) {
+		...
+		decltype(auto) ret = f(std::forward<decltype(args)>(args)...);
+		...
+		if constexpr (std::is_rvalue_reference_v<decltype(ret)>) {
+			return std::move(ret); // move value returned by f() to the caller
+		}
+		else {
+			return (ret); // FATAL RUNTIME ERROR: always returns an lvalue reference
+		}
+	};
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+

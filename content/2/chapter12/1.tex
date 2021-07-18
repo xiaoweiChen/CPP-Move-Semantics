@@ -1,0 +1,82 @@
+在泛型代码中，我们经常计算一个值，然后返回给调用者。问题是，我们如何完美地返回值，但仍然保留类型和值类别?换句话说:应该如何声明以下函数的返回类型:\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+??? callFoo(T&& arg)
+{
+	return foo(std::forward<T>(arg));
+}
+\end{lstlisting}
+
+这个函数中，调用了一个名为foo()的函数，形参是完全转发的arg。我们不知道这种类型的foo()返回什么;它可能是一个临时值(prvalue)、一个lvalue引用或一个rvalue引用。返回类型可以是const或非const。\par
+
+那么，如何完美地将foo()的返回值返回给callFoo()的调用者呢?有几个种方式是不起作用的:\par
+
+\begin{itemize}
+	\item 返回类型auto将删除foo()返回类型的引用。例如，如果提供对容器元素的访问权限(将foo()视为at()成员函数或vector的索引操作符)，callFoo()将不再提供对该元素的访问权限。此外，我们可能会创建一个不必要的副本(如果没有优化掉的话)。
+	\item 任何作为引用的返回类型(auto\&， const auto\&，和auto\& \&)将返回对局部对象的引用，如果foo()按值返回一个临时对象。幸运的是，编译器在检测到此类bug时可以发出警告。
+\end{itemize}
+
+也就是说，我们需要一种方式来表示:\par
+
+\begin{itemize}
+	\item 如果我们有一个值，则按值返回
+	\item 如果我们得到/有一个引用，则按引用返回
+\end{itemize}
+
+但仍然保留返回的类型和值类别。\par
+
+C++14为此引入了一个新的占位符类型:decltype(auto)。\par
+
+\begin{lstlisting}[caption={}]
+template<typename T>
+decltype(auto) callFoo(T&& arg) // since C++14
+{
+	return foo(std::forward<T>(arg));
+}
+\end{lstlisting}
+
+有了这个声明，callFoo()按值返回，如果foo()按值返回，如果foo()按引用返回，callFoo()按引用返回。在所有情况下，类型和值类别都保留。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
