@@ -1,0 +1,143 @@
+C++标准库提供了一些移动元素的算法。这些算法是:\par
+
+\begin{itemize}
+	\item std::move()，将元素移动到另一个范围或在同一范围内向后移动(不要将此算法与std::move()标记不再需要其值的对象混淆)\par
+	指定目标范围的开头，元素将从源范围的开头移动到末尾。
+	\item std::move\_backward()，将元素移动到另一个范围或在同一范围内向前移动\par
+	指定目标范围的结束，元素将从源范围的结束移动到开始。
+\end{itemize}
+
+这些算法是使用移动语义的std::copy()和std::copy\_backward()算法的对等操作。是的，std::move()还有另一个重载，它接受多个形参(三个迭代器(从C++17起)，还有一个可选的并行执行策略)。\par
+
+这些算法的效果是在迭代每个元素时调用std::move(elem)对目标范围进行移动赋值。\par
+
+考虑以下例子:\par
+
+{\color{red}{lib/movealgo.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <string>
+#include <vector>
+#include <list>
+#include <algorithm>
+
+template<typename T>
+void print(const std::string& name, const T& coll)
+{
+	std::cout << name << " (" << coll.size() << " elems): ";
+	for (const auto& elem : coll) {
+		std::cout << " '" << elem << "'";
+	}
+	std::cout << "\n";
+}
+
+int main(int argc, char** argv)
+{
+	std::list<std::string> coll1 { "love", "is", "all", "you", "need" };
+	std::vector<std::string> coll2;
+	
+	// ensure coll2 has enough elements to overwrite their values:
+	coll2.resize(coll1.size());
+	
+	// print out size and values:
+	print("coll1", coll1);
+	print("coll2", coll2);
+	// move assign the values from coll1 to coll2
+	// - not changing any size
+	std::move(coll1.begin(), coll1.end(), // source range
+	coll2.begin()); // destination range
+	
+	// print out size and values:
+	print("coll1", coll1);
+	print("coll2", coll2);
+	
+	// move assign the first three values inside coll2 to the end
+	// - not changing any size
+	std::move_backward(coll2.begin(), coll2.begin()+3, // source range
+	coll2.end()); // destination range
+	
+	// print out size and values:
+	print("coll1", coll1);
+	print("coll2", coll2);
+}
+\end{lstlisting}
+
+当调用std::move()算法时，将源容器的所有值赋给目标容器:\par
+
+\begin{lstlisting}[caption={}]
+// move assign the values from coll1 to coll2
+// - not changing any size
+std::move(coll1.begin(), coll1.end(), // source range
+		  coll2.begin()); // destination range
+\end{lstlisting}
+
+与覆盖算法一样，目标容器必须已经有足够的元素(否则就会有未定义的行为)。元素的数量不会改变(无论是在源范围还是在目标范围)。但是，源范围的元素处于“已移动”状态。因此，在这个调用之后，我们不知道源范围内字符串的值(除非为已移动对象指定了行为，比如只移动类型)。\par
+
+当调用本例中的std::move\_backward()算法时，将前三个元素赋值到同一个集合的末尾:\par
+
+\begin{lstlisting}[caption={}]
+// move assign the first three values inside coll2 to the end
+// - not changing any size
+std::move_backward(coll2.begin(), coll2.begin()+3, // source range
+				   coll2.end()); // destination range
+\end{lstlisting}
+
+同样，如果没有另一个值移走，元素的状态将会是已移动。因此，不再知道前两个元素的值(第三个元素的值被第一个元素的移动赋值覆盖)。在这通调用之后，我们只知道coll2的最后三个元素是love, is和all。\par
+
+因此，整个程序的输出是这样的(?表示不确定的值):\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+	coll1 (5 elems): 'love' 'is' 'all' 'you' 'need' \\
+	coll2 (5 elems): '' '' '' '' '' \\
+	coll1 (5 elems): '?' '?' '?' '?' '?' \\
+	coll2 (5 elems): 'love' 'is' 'all' 'you' 'need' \\
+	coll1 (5 elems): '?' '?' '?' '?' '?' \\
+	coll2 (5 elems): '?' '?' 'love' 'is' 'all'
+\end{tcolorbox}
+
+从字符串移动通常是空的，但这不能保证。实践中，我甚至在一个平台上发现了这样的输出:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+	coll1 (5 elems): 'love' 'is' 'all' 'you' 'need' \\
+	coll2 (5 elems): '' '' '' '' '' \\
+	coll1 (5 elems): '' '' '' '' '' \\
+	coll2 (5 elems): 'love' 'is' 'all' 'you' 'need' \\
+	coll1 (5 elems): '' '' '' '' '' \\
+	coll2 (5 elems): 'need' 'you' 'love' 'is' 'all'
+\end{tcolorbox}
+
+
+所以，与往常一样:在使用已移动元素时要小心。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
