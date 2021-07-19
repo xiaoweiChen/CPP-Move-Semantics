@@ -1,0 +1,169 @@
+只移动类型和对象在声明或使用时有一些共同点。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{13.1.1 声明只移动类型}
+
+只移动类型禁用了复制。通常，复制构造函数和复制赋值操作符会删除，而移动构造函数和移动赋值操作符会默认或实现:\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+class MoveOnly {
+public:
+	// constructors:
+	MoveOnly();
+	...
+	// copying disabled:
+	MoveOnly(const MoveOnly&) = delete;
+	MoveOnly& operator= (const MoveOnly&) = delete;
+	// moving enabled:
+	MoveOnly(MoveOnly&&) noexcept;
+	MoveOnly& operator= (MoveOnly&&) noexcept;
+};
+\end{lstlisting}
+
+按照规则，声明移动特殊成员函数就足够了(因为声明特殊移动成员将复制成员标记为已删除)。但是，显式地将复制特殊成员函数标记为=delete会使意图更加明确。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{13.1.2 使用只移动类型}
+
+通过上面的声明，可以创建和移动对象，但不能复制。例如:\par
+
+\begin{lstlisting}[caption={}]
+std::vector<MoveOnly> coll;
+...
+coll.push_back(MoveOnly{}); // OK, creates a temporary object, which is moved into coll
+...
+MoveOnly mo;
+coll.push_back(mo); // ERROR: can’t copy mo into coll
+coll.push_back(std::move(mo)); // OK, moves mo into coll
+\end{lstlisting}
+
+要将只移动元素的值移出容器，需要使用std::move()作为元素的引用。例如:\par
+
+\begin{lstlisting}[caption={}]
+mo = std::move(coll[0]); // move assign first element (still there with moved-from state)
+\end{lstlisting}
+
+但请记住，在这个调用之后，元素仍然在容器中，状态为已移动。\par
+
+在循环中，移除所有元素也是可能的:\par
+
+\begin{lstlisting}[caption={}]
+for (auto& elem : coll) { // note: non-const reference
+	coll2.push_back(std::move(elem)); // move element to coll2
+}
+\end{lstlisting}
+
+同样的，元素仍然在容器中，状态为已移动。\par
+
+对于只移动类型，有两个操作是不可能的:\par
+
+\begin{itemize}
+	\item 不能使用std::initializer\_lists，因为它们通常是按值传递的，这需要复制元素:
+	\begin{lstlisting}[caption={}]
+	std::vector<MoveOnly> coll{ MoveOnly{}, ... }; // ERROR
+	\end{lstlisting}
+	\item 只能通过引用迭代一个容器中所有只允许移动的元素:
+	\begin{lstlisting}[caption={}]
+	std::vector<MoveOnly> coll;
+	...
+	for (const auto& elem : coll) { // OK
+		...
+	}
+	...
+	for (auto elem : coll) { // ERROR: can’t copy move-only elements
+		...
+	}
+	\end{lstlisting}
+\end{itemize}
+
+请参阅lib/moveonly.cpp来获得一个完整的程序，其中包含本节中的所有示例语句。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{13.1.3 将只移动对象作为参数传递}
+
+如果使用了移动语义，可以通过值传递和返回只移动的对象:\par
+
+\begin{lstlisting}[caption={}]
+void sink(MoveOnly arg); // sink() takes ownership of the passed argument
+
+sink(MoveOnly{}); // OK, moves temporary objects to arg
+MoveOnly mo;
+sink(mo); // ERROR: can’t copy mo to arg
+sink(std::move(mo)); // OK, moves mo to arg because passed by value
+\end{lstlisting}
+
+从语义上讲，在这里将相关资源的所有权传递给函数。但请注意，只有当参数按值接受时才会出现这种情况。\par
+
+sink()函数也可以通过(rvalue或通用)引用声明为只接受移动对象。这种情况下，仍然需要通过std::move()传递lvalue。但是，不知道传递的资源的所有权是否由sink()获取。\par
+
+\begin{lstlisting}[caption={}]
+void sink(MoveOnly&& arg); // sink() might take ownership of the passed argument
+
+MoveOnly mo;
+sink(mo); // ERROR: can’t pass lvalue mo to arg
+sink(std::move(mo)); // OK, might move mo to something inside sink()
+\end{lstlisting}
+
+Scott Meyers和Herb Sutter (C++社区的两位主要作者)讨论了应该如何声明只移动类型的接收器函数。Herb的立场是通过值来取参数，Scott的立场是通过rvalue引用来取参数。\par
+
+据我所知，他们后来一致认为最好采用rvalue引用的方法。然而，真正的答案不重要。std::move()的通常规则也应该适用于这里:如果用std::move()传递一个只移动的对象，可能会丢失它的值，也可能不会。如果放弃所有权很重要(希望确保文件已关闭、线程已停止或相关的资源已释放)，请在调用后使用相应语句直接明确。例如:\par
+
+\begin{lstlisting}[caption={}]
+MoveOnly mo;
+
+foo(std::move(mo)); // might move ownership
+// ensure mo’s resource is longer acquired/owned/open/running:
+mo.close(); // or mo.reset() or mo.release() or so
+\end{lstlisting}
+
+只移动对象通常有这样的函数，但名称不同(例如，在C++标准库中，称为流的close()，线程的join()，或唯一指针的reset())。这些函数通常将对象带入默认构造状态。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{13.1.4 按值返回只移动的对象}
+
+还可以实现按值返回(新的)只移动对象的源函数，这意味着将所有权传递给函数的调用者。\par
+
+如果以这种方式返回一个局部对象，就会自动使用移动语义:\par
+
+\begin{lstlisting}[caption={}]
+MoveOnly source()
+{
+	MoveOnly mo;
+	...
+	return mo; // moves mo to the caller
+}
+
+MoveOnly m{source()}; // takes ownership of the associated value/resource
+\end{lstlisting}
+
+当有非本地数据时，才可能需要在return语句中使用std::move()(例如，在成员函数中移出成员的值)。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{13.1.5 只移动对象的移动状态}
+
+只移动对象的已移动状态通常不再拥有自己的资源。这是一个已定义的状态，该类型的用户应该能够对其进行双重检查。有时，移动操作只是交换内部数据，以便移动赋值将另一个资源分配给已移动对象(例如，流类这样做)。\par
+
+C++标准库使用不同的方式和名称来检查不再拥有资源的“已移动”状态。例如，正校验(是否仍拥有资源?)可能如下所示:\par
+
+\begin{itemize}
+	\item if(s.is\_open())是文件流
+	\item if(up)对于unique指针
+	\item if(t.joinable())对于thread对象
+	\item if(f.valid())对于std::future对象
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
