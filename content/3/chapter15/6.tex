@@ -1,0 +1,162 @@
+C++标准库有两个特殊的类型，它们代表正在运行的线程或用于同步它们。其中一些既不能复制也不能移动(例如，原子类型或条件变量)。然而，其中一些是只移动类型。让我们从移动语义的角度来看一些细节。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{15.6.1 std::thread<>和std::jthread<>}
+
+表示运行线程的对象(std::thread或C++20 std::jthread)可以传递，但不能复制。我们可以把它们放在容器里。\par
+
+考虑以下例子:\par
+
+{\color{red}{lib/thread.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <thread>
+#include <vector>
+
+void doThis(const std::string& arg) {
+	std::cout << "doThis(): " << arg << '\n';
+}
+void doThat(const std::string& arg) {
+	std::cout << "doThat(): " << arg << '\n';
+}
+
+int main()
+{
+	std::vector<std::thread> threads; // better std::jthread since C++20
+	
+	// start a couple of threads:
+	std::string someArg{"Black Lives Matter"};
+	threads.push_back(std::thread{doThis, someArg});
+	threads.push_back(std::thread{doThat, std::move(someArg)});
+	...
+	
+	// wait for all threads to end:
+	for (auto& t : threads) {
+		t.join();
+	}
+}
+\end{lstlisting}
+
+在这里，我们启动两个线程，并将它们放入所有运行线程的集合中:\par
+
+\begin{lstlisting}[caption={}]
+std::vector<std::thread> threads; // better std::jthread since C++20
+
+std::string someArg{"black lives matter"};
+threads.push_back(std::thread{doThis, someArg});
+threads.push_back(std::thread{doThat, std::move(someArg)});
+\end{lstlisting}
+
+我们通过声明std::thread类型的对象(从C++20开始，最好使用std::jthread)来启动一个线程，并将临时对象移动到线程中。在可调用对象(函数, Lambda, 函数对象)的参数后面，可以传递额外的参数，这些参数在线程启动时传递给可调用对象。默认情况下，线程类的构造函数会复制这些参数。使用std::move()切换到移动语义。因此，doThis()获得传递给someArg的字符串的副本，而doThat()获得该字符串的移动值。\par
+
+最后，我们等待所有线程的结束(当使用std::thread时，这是避免段错误的必要条件):\par
+
+\begin{lstlisting}[caption={}]
+// wait for all threads to end:
+for (auto& t : threads) {
+	t.join();
+}
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{15.6.2 Future, Promise和打包任务}
+
+对于一些用于同步两个线程之间(返回)值交换的helper类型，还使用了只移动类型(future、promise和打包任务都是只移动类型)。\par
+
+考虑以下例子:\par
+
+{\color{red}{lib/future.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <string>
+#include <vector>
+#include <thread>
+#include <future>
+
+void getValue(std::promise<std::string> p)
+{
+	try {
+		std::string ret{"vote"};
+		...
+		// store result:
+		p.set_value_at_thread_exit(std::move(ret));
+	}
+	catch(...) {
+		// store exception:
+		p.set_exception_at_thread_exit(std::current_exception());
+	}
+}
+int main()
+{
+	std::vector<std::future<std::string>> results;
+	
+	// create promise and future to deal with outcome of the thread started:
+	std::promise<std::string> p;
+	std::future<std::string> f{p.get_future()};
+	results.push_back(std::move(f));
+	
+	// start thread and move the promise to it:
+	std::thread t{getValue, move(p)};
+	t.detach(); // would not be necessary for std::jthread
+	...
+	
+	// wait for all threads to end:
+	for (auto& fut : results) {
+		std::cout << fut.get() << '\n';
+	}
+}
+\end{lstlisting}
+
+在main()中，首先创建了一个promise，即能够将结果(值或异常)发送给能够读取它的关联future:\par
+
+\begin{lstlisting}[caption={}]
+std::promise<std::string> p;
+std::future<std::string> f{p.get_future()};
+\end{lstlisting}
+
+future移动到一个future的集合中:\par
+
+\begin{lstlisting}[caption={}]
+results.push_back(std::move(f));
+\end{lstlisting}
+
+也可以将p.get\_future()的结果直接传递给push\_back():\par
+
+\begin{lstlisting}[caption={}]
+results.push_back(p.get_future());
+\end{lstlisting}
+
+promise移动到已启动的线程:\par
+
+\begin{lstlisting}[caption={}]
+std::thread t{getValue, move(p)};
+\end{lstlisting}
+
+线程将作为getValue()的参数，getValue()按值接受传递的promise:\par
+
+\begin{lstlisting}[caption={}]
+void getValue(std::promise<std::string> p)
+{
+	...
+}
+\end{lstlisting}
+
+通过这种方式，getValue()接收promise的所有权，并在线程结束时销毁通信机制的源.\par
+
+getValue()也可以通过引用的方式获取promise，因为启动的线程保存着已移动的promise值，直到它结束为止。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+

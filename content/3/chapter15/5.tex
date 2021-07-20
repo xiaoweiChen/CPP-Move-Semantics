@@ -1,0 +1,142 @@
+IOStreams在C++98中引入，作为一种可以读写的抽象(标准I/O，文件，甚至字符串)。这是一个早期的设计，不可能复制这些对象(复制打开的文件的对象意味着什么，对相同的文件有两个句柄或复制文件，以及如何同步访问?)\par
+
+然而，自从C++11以来，移动语义允许我们移动IOStream对象，并使用临时流。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{15.5.1 移动IOStream对象}
+
+考虑如下示例:\par
+
+{\color{red}{lib/outfile.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <fstream>
+#include <stream>
+
+std::ofstream openToWrite(const std::string& name)
+{
+	std::ofstream file(name); // open a file to write to
+	if (!file) {
+		std::cerr << "can't open file '" << name << "'\n";
+		std::exit(EXIT_FAILURE);
+	}
+	return file; // return ownership (open file)
+}
+
+void storeData(std::ofstream fstrm) // takes ownership of file (but this might change)
+{
+	fstrm << 42 << '\n';
+} // closes the file
+
+int main()
+{
+	auto outFile{openToWrite("iostream.tmp")}; // open file
+	storeData(std::move(outFile)); // store data
+	
+	// better ensure that the file is closed:
+	if (outFile.is_open()) {
+		outFile.close();
+	}
+}
+\end{lstlisting}
+
+这里，函数openToWrite()打开并返回一个输出文件流:\par
+
+\begin{lstlisting}[caption={}]
+std::ofstream openToWrite(const std::string& name)
+{
+	std::ofstream file(name); // open a file to write to
+	...
+	return file; // return ownership (open file)
+}
+\end{lstlisting}
+
+我们使用返回值初始化outFile并将其传递给storeData():\par
+
+\begin{lstlisting}[caption={}]
+auto outFile{openToWrite("iostream.tmp")}; // open file
+storeData(std::move(outFile)); // store data
+\end{lstlisting}
+
+因为storeData()按值接受参数，所以它有打开文件的所有权。因此，在storeData()的末尾，文件关闭:\par
+
+\begin{lstlisting}[caption={}]
+void storeData(std::ofstream fstrm) // takes ownership of file (but this might change)
+{
+	...
+} // closes the file
+\end{lstlisting}
+
+但是，storeData()也可以通过引用来获取参数，这意味着它不一定需要获取所有权。这种情况下，可能想要在事后再次检查传递参数outFile的状态:\par
+
+\begin{lstlisting}[caption={}]
+// better ensure that the file is closed:
+if (!outFile.is_closed()) {
+	outFile.close();
+}
+\end{lstlisting}
+
+调用outFile.close()通常就足够了，但如果文件流已经关闭，则会设置该文件流的failbit。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{15.5.2 使用临时IOStreams}
+
+自C++11开始，IOStreams库也提供了函数重载来接受rvalue引用，这允许接受临时对象。例如:\par
+
+\begin{lstlisting}[caption={}]
+std::string s = "hello, world";
+std::ofstream("fstream1.tmp") << s << '\n'; // OK since C++11
+\end{lstlisting}
+
+你甚至可以这样向流中写一个字符串字面值(这使用C++11标准之前编译，其使用operator<<(const void*)输出字符串字面值的地址):\par
+
+\begin{lstlisting}[caption={}]
+std::ofstream("fstream1.tmp") << "hello, world\n"; // correct since C++11
+// (wrote address before)
+\end{lstlisting}
+
+同样，可以用一个临时字符串流来解析一个给定的字符串:\par
+
+\begin{lstlisting}[caption={}]
+std::string name, firstname, lastname;
+...
+name = "Tina Turner";
+std::istringstream{name} >> firstname >> lastname; // OK since C++11
+\end{lstlisting}
+
+最后，你可以使用std::getline()来解析临时流的第一行:\par
+
+\begin{lstlisting}[caption={}]
+std::string multiLineString, firstLine;
+...
+std::getline(std::stringstream{multiLineString}, // read from temporary string stream
+firstLine);
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

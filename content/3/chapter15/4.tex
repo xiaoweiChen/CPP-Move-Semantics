@@ -1,0 +1,153 @@
+原始指针不能从移动语义中获益(它们的地址值总是副本)，而智能指针可以从移动语义中获益。\par
+
+\begin{itemize}
+	\item 共享指针(std::shared\_ptr<>)支持移动语义，这很有帮助，因为移动共享指针比复制共享指针廉价得多。
+	\item 唯一指针(std::unique\_ptr<>)甚至只支持移动语义，因为复制唯一指针是不可能的。
+\end{itemize}
+
+\hspace*{\fill} \par %插入空行
+\textbf{15.4.1 std::shared\_ptr<>的移动语义}
+
+共享指针有共享所有权的概念。多个共享指针可以“拥有”同一个对象，当最后一个所有者销毁(或获得一个新值)时，将调用所拥有对象的“删除器”。\par
+
+例如:\par
+
+\begin{lstlisting}[caption={}]
+{
+	std::shared_ptr<int> sp1; // init shared pointer that does not own anything
+	{
+		auto sp2{std::make_shared<int>(42)}; // init shared pointer that owns new int
+		...
+		sp1 = sp2; // sp1 and sp2 now share ownership
+		...
+		*sp2 = 77; // modify value via sp2
+		...
+	} // sp2 destroyed, sp1 is the only owner
+	std::cout << *sp1 << '\n'; // use modified value via sp1
+} // last owner destroyed so that delete is called
+\end{lstlisting}
+
+在这个例子中，赋值操作符复制了int对象的所有。之后，两个共享指针都拥有该对象。但请注意，复制所有权是一个非常昂贵的操作。这是因为计数器必须跟踪所有者的数量:\par
+
+\begin{itemize}
+	\item 每次复制一个共享指针时，所有者计数器就递增
+	\item 每次销毁共享指针或赋值时，所有者计数器就递减
+\end{itemize}
+
+此外，修改计数器的值代价很高，因为修改是原子操作，可以避免多线程处理拥有相同对象的共享指针时出现的问题。\par
+
+因此，通过引用遍历共享指针集合要廉价得多:\par
+
+\begin{lstlisting}[caption={}]
+std::vector<std::shared_ptr< ... >> coll;
+...
+for (auto sp : coll) { // expensive
+	...
+}
+...
+for (const auto& sp : coll) { // cheap
+	...
+}
+\end{lstlisting}
+
+对于移动语义，最好是移动共享指针而不是复制它们。例如，不要这样实现:\par
+
+\begin{lstlisting}[caption={}]
+std::shared_ptr<int> lastPtr; // init shared pointer that does not own anything
+while ( ... ) {
+	auto ptr{std::make_shared<int>(getValue())}; // init shared pointer that owns new int
+	...
+	lastPtr = ptr; // expensive (note: ptr no longer used)
+} // ptr destroyed, lastPtr is the only owner
+\end{lstlisting}
+
+最好这样做:\par
+
+\begin{lstlisting}[caption={}]
+std::shared_ptr<int> lastPtr; // init shared pointer that does not own anything
+while ( ... ) {
+	auto ptr{std::make_shared<int>(getValue())}; // init shared pointer that owns new int
+	...
+	lastPtr = std::move(ptr); // cheap
+} // ptr destroyed, lastPtr is the only owner
+\end{lstlisting}
+
+因此，当对象移动时，具有共享指针成员的对象将失去这些成员所指向的资源的所有权。这对性能有好处，但它可能会创建无效的从状态移动。因此，应该对拥有std::shared\_ptr<>类型成员的已移动对象的状态进行双重检查。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{15.4.2 std::unique\_ptr<>的移动语义}
+
+类模板std::unique\_ptr<>实现了独占所有权的概念。类型系统确保一个对象在任何时候只能有一个所有者。技巧是使用类型系统来禁用复制唯一指针。因为这个检查是在编译时完成的，所以这种方法不会在运行时引入任何显著的性能开销。\par
+
+可以在源函数中创建一个unique指针，并将其返回给调用者:\par
+
+{\color{red}{lib/uniqueptr1.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <string>
+#include <memory>
+
+std::unique_ptr<std::string> source()
+{
+	static long id{0};
+	// create string with new and let ptr own it:
+	auto ptr = std::make_unique<std::string>("obj" + std::to_string(++id));
+	...
+	return ptr; // transfer ownership to caller
+}
+
+int main()
+{
+	std::unique_ptr<std::string> p;
+	for (int i = 0; i < 10; ++i) {
+		p = source(); // p gets ownership of the returned object
+		              //(previously returned object of source() is deleted)
+		std::cout << *p << '\n';
+		...
+	}
+} // last-owned object of p is deleted
+\end{lstlisting}
+
+和已移动类型一样，要将所有权传递给接收器函数，只能通过std::move()传递:\par
+
+\begin{lstlisting}[caption={}]
+std::vector<std::unique_ptr<std::string>> coll;
+std::unique_ptr<std::string> up;
+...
+coll.push_back(up); // ERROR: copying disabled
+coll.push_back(std::move(up); // OK, moves ownership into new element of coll
+\end{lstlisting}
+
+如果传递一个unique指针给一个通过引用接受参数的潜在接收器函数，则不知道所有权是否已经移动。所有权是否转移取决于功能的实现。这种情况下，可以用bool()操作符再次检查状态:\par
+
+\begin{lstlisting}[caption={}]
+std::unique_ptr<std::string> up;
+...
+sink(std::move(up)); // might move ownership to sink()
+if (up) { // does it still have the ownership?
+	...
+}
+\end{lstlisting}
+
+或者，可以确保所有权消失(资源释放):\par
+
+\begin{lstlisting}[caption={}]
+std::unique_ptr<std::string> up;
+...
+sink(std::move(up)); // might move ownership to sink()
+up.reset(); // ensure ownership is gone (resource deleted)
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,148 @@
+字符串是可以分配内存来保存其值的对象。因此，可以对它们使用移动语义。\par
+
+书中已经有了几个关于字符串如何支持移动语义的例子:\par
+
+\begin{itemize}
+	\item 将字符串移动到一个vector中
+	\item 为字符串实现一个移动构造函数
+	\item 成员初始化字符串
+	\item 在循环中读取字符串，并在move()之后使用它们
+\end{itemize}
+
+本节中，我们将更详细地介绍移动语义对字符串的影响。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{15.1.1 字符串分配和容量}
+
+字符串的容量(当前可用于该值的内存)通常不会减少。只有移动操作、swap()或shrink \_to\_fit()可以减小容量。\par
+
+考虑下面例子:\par
+
+{\color{red}{lib/stringmoveassign.cpp}}\par
+
+\begin{lstlisting}[caption={}]
+#include <iostream>
+#include <string>
+
+int main()
+{
+	std::string s0;
+	std::string s1{"short"};
+	std::string s2{"a string with an extraordinarily long value"};
+	std::cout << "- s0 capa: " << s0.capacity() << " ('" << s0 << "')\n";
+	std::cout << " s1 capa: " << s1.capacity() << " ('" << s1 << "')\n";
+	std::cout << " s2 capa: " << s2.capacity() << " ('" << s2 << "')\n";
+	
+	std::string s3{std::move(s1)};
+	std::string s4{std::move(s2)};
+	std::cout << "- s1 capa: " << s1.capacity() << " ('" << s1 << "')\n";
+	std::cout << " s2 capa: " << s2.capacity() << " ('" << s2 << "')\n";
+	std::cout << " s3 capa: " << s3.capacity() << " ('" << s3 << "')\n";
+	std::cout << " s4 capa: " << s4.capacity() << " ('" << s4 << "')\n";
+	
+	std::string s5{"quite a reasonable value"};
+	std::cout << "- s4 capa: " << s4.capacity() << " ('" << s4 << "')\n";
+	std::cout << " s5 capa: " << s5.capacity() << " ('" << s5 << "')\n";
+	
+	s4 = std::move(s5);
+	std::cout << "- s4 capa: " << s4.capacity() << " ('" << s4 << "')\n";
+	std::cout << " s5 capa: " << s5.capacity() << " ('" << s5 << "')\n";
+}
+\end{lstlisting}
+
+程序中，首先可以看到，由于小字符串优化(SSO)，通常即使是空字符串也有容纳某些字符的能力，这通常为字符串本身的值保留15或22个字节。除了SSO的大小之外，字符串在堆上分配内存，堆至少有存储值所需的大小。因此：\par
+
+\begin{lstlisting}[caption={}]
+std::string s0;
+std::string s1{"short"};
+std::string s2{"a string with an extraordinarily long value"};
+\end{lstlisting}
+
+我们可能会得到如下输出:\par
+
+\begin{itemize}
+	\item 平台 A:
+	\begin{tcolorbox}[colback=white,colframe=black]
+	- s0 capa: 15 ('') \\
+	s1 capa: 15 ('short') \\
+	s2 capa: 43 ('a string with an extraordinarily long value')
+	\end{tcolorbox}	
+	\item 平台 B:
+	\begin{tcolorbox}[colback=white,colframe=black]
+	- s0 capa: 22 ('') \\
+	s1 capa: 22 ('short') \\
+	s2 capa: 47 ('a string with an extraordinarily long value')
+	\end{tcolorbox}	
+\end{itemize}
+
+这里，两个平台似乎都支持SSO(最多15或22个字符)，当只需要43个字符的内存时，第二个平台为47个字符分配内存。\par
+
+在所有平台上，已移动字符串通常为空，即使值没有存储在外部分配的内存中(因此我们必须复制所有字符)。\par
+
+\begin{lstlisting}[caption={}]
+std::string s3{std::move(s1)};
+std::string s4{std::move(s2)};
+\end{lstlisting}
+
+我们通常会得到这样的结果:\par
+
+\begin{itemize}
+	\item 平台 A:
+	\begin{tcolorbox}[colback=white,colframe=black]
+	- s1 capa: 15 ('') \\
+	s2 capa: 15 ('') \\
+	s3 capa: 15 ('short') \\
+	s4 capa: 43 ('a string with an extraordinarily long value')
+	\end{tcolorbox}	
+	\item 平台 B:
+	\begin{tcolorbox}[colback=white,colframe=black]
+	- s1 capa: 22 ('') \\
+	s2 capa: 22 ('') \\
+	s3 capa: 22 ('short') \\
+	s4 capa: 47 ('a string with an extraordinarily long value')
+	\end{tcolorbox}	
+\end{itemize}
+
+注意，这里不能保证s1变成空的。通常，C++标准库只保证从字符串中移动的字符串处于有效但未指定的状态，这意味着s1的值仍然可以是“short”，甚至是其他值。\par
+
+移动时分配不同的字符串值可能会缩小容量。示例程序的最后两个步骤基本上执行:\par
+
+\begin{lstlisting}[caption={}]
+std::string s4{"a string with an extraordinarily long value"};
+std::string s5{"quite a reasonable value"};
+s4 = std::move(s5);
+\end{lstlisting}
+
+你可以在实践中找到以下输出:\par
+
+\begin{itemize}
+	\item 内存交换:
+	\begin{tcolorbox}[colback=white,colframe=black] 	
+	- s4 capa: 43 ('a string with an extraordinarily long value') \\
+	s5 capa: 24 ('quite a reasonable value') \\
+	- s4 capa: 24 ('quite a reasonable value') \\
+	s5 capa: 43 ('')
+	\end{tcolorbox}	
+	\item 移动内存(释放旧内存后):
+	\begin{tcolorbox}[colback=white,colframe=black]
+	- s4 capa: 47 ('a string with an extraordinarily long value') \\
+	s5 capa: 31 ('quite a reasonable value') \\
+	- s4 capa: 31 ('quite a reasonable value') \\
+	s5 capa: 22 ('')
+	\end{tcolorbox}	
+\end{itemize}
+
+如您所见，s4的容量通常会缩小，有时缩小到目标的容量，有时缩小到空字符串的最小容量。然而，两者都不能完全保证。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
