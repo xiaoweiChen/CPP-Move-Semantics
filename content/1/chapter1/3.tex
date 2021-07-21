@@ -1,6 +1,6 @@
-可以通过移动语义，移动临时对象或用\textit{std::move()}标记的对象，可以通过“窃取”源值来优化值的复制(采用非const右值引用)。但是，如果没有针对移动语义的优化版本，则使用复制。\par
+可以通过移动语义，移动临时对象或用\textit{std::move()}标记的对象，可以通过“窃取”源值来优化值的复制(采用非\textit{const}右值引用)。但是，如果没有针对移动语义的优化版本，则使用复制。\par
 
-例如，像\textit{vector}这样的容器类缺少\textit{push\_back()}的重载:\par
+例如，像vector这样的容器类缺少\textit{push\_back()}的重载:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -21,10 +21,10 @@ std::string s{"data"};
 coll.push_back(std::move(s)); // OK, uses copy semantics
 \end{lstlisting}	
 	
-对于临时对象或使用std::move()的对象，首选是将形参声明为右值引用的函数。如果不存在这样的函数，则使用复制语义。这样，就可以确保调用者不需要知道是否存在优化。优化有可能没有，因为:\par
+对于临时对象或使用\textit{std::move()}的对象，首选是将形参声明为右值引用的函数。如果不存在这样的函数，则使用复制语义。这样，就可以确保调用者不需要知道是否存在优化。优化有可能没有，因为:\par
 	
 \begin{itemize}
-	\item 函数/类是在移动语义支持前实现，或者没有考虑支持移动语义
+	\item 函数/类是在移动语义支持之前实现，或者没有考虑支持移动语义
 	\item 没有什么需要优化的(只有数字成员的类就是一个例子)
 \end{itemize}
 	

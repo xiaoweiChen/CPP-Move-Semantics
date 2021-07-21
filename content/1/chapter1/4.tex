@@ -26,10 +26,10 @@ coll.push_back(std::move(s)); // OK, calls push_back(const std::string&)
 
 \textit{const}对象的\textit{std::move()}没起作用。\par
 
-原则上，可以通过声明带有\textit{const}右值引用的函数进行重载，但在语义上没有意义。同样，\textit{const}左值引用方式会作为处理这种情况的备选。\par
+原则上，可以通过声明带有\textit{const}右值引用的函数进行重载，但在语义上没有意义。同样，\textit{const}左值引用会作为处理这种情况的备选。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{1.4.1 const返回值}
+\textbf{1.4.1 \textit{const}返回值}
 
 \textit{const}禁用移动语义对声明返回类型也有影响。\textit{const}返回值不能移动。\par
 

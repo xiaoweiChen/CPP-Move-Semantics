@@ -1,4 +1,4 @@
-如果有一个对象，当使用的时候，生存期没有结束，可以用\textit{std::move()}标记它，表示“在这里不再需要这个值。”std::move()不进行移动，它只在使用表达式的上下文中设置一个临时标记:\par
+如果有一个对象，当使用的时候，生存期没有结束，可以用\textit{std::move()}标记它，表示“在这里不再需要这个值。”\textit{std::move()}不进行移动，只在使用表达式的上下文中设置了一个临时标记:\par
 
 \begin{lstlisting}[caption={}]
 void foo1(const std::string& lr); // binds to the passed object without modifying it
@@ -10,7 +10,7 @@ foo1(s); // calls the first foo1(), s keeps its value
 foo1(std::move(s)); // calls the second foo1(), s might lose its value
 \end{lstlisting}
 
-带有\textit{std::move()}标记的对象仍然可以传递给接受普通const左值引用的函数:\par
+带有\textit{std::move()}标记的对象仍然可以传递给接受普通\textit{const}左值引用的函数:\par
 
 \begin{lstlisting}[caption={}]
 void foo2(const std::string& lr); // binds to the passed object without modifying it
@@ -21,7 +21,7 @@ foo2(s); // calls foo2(), s keeps its value
 foo2(std::move(s)); // also calls foo2(), s keeps its value
 \end{lstlisting}
 
-注意，用\textit{std::move()}标记的对象不能传递给非const左值引用:\par
+注意，用\textit{std::move()}标记的对象不能传递给非\textit{const}左值引用:\par
 
 \begin{lstlisting}[caption={}]
 void foo3(std::string&); // modifies the passed argument
@@ -37,7 +37,7 @@ foo3(std::move(s)); // ERROR: no matching foo3() declared
 \hspace*{\fill} \par %插入空行
 \textbf{2.2.1 std::move()的头文件}
 
-std::move()定义为C++标准库中的一个函数。因此，使用时需要包含头文件<utility>:\par
+\textit{std::move()}定义为C++标准库中的一个函数。因此，使用时需要包含头文件<utility>:\par
 
 \begin{lstlisting}[caption={}]
 #include <utility> // for std::move()
@@ -48,7 +48,7 @@ std::move()定义为C++标准库中的一个函数。因此，使用时需要包
 \hspace*{\fill} \par %插入空行
 \textbf{2.2.2 实现std::move()}
 
-\textit{std::move()}只不过是对右值引用的static\_cast。可以手动调用static\_cast来达到相同的效果，如下所示:\par
+\textit{std::move()}只不过是对右值引用的\textit{static\_cast}。可以手动调用\textit{static\_cast}来达到相同的效果，如下所示:\par
 
 \begin{lstlisting}[caption={}]
 foo(static_cast<decltype(obj)&&>(obj)); // same effect as foo(std::move(obj))
@@ -62,7 +62,7 @@ std::string s;
 foo(static_cast<std::string&&>(s)); // same effect as foo(std::move(s))
 \end{lstlisting}
 
-注意，static\_cast所做的不仅仅是改变对象的类型。它还允许将对象传递给右值引用(记住，通常不允许将具有名称的对象传递给右值引用)。我们将在关于价值类别的章节中详细讨论。\par
+注意，\textit{static\_cast}所做的不仅仅是改变对象的类型。还允许将对象传递给右值引用(记住，通常不允许将具有名称的对象传递给右值引用)。我们将在关于价值类别的章节中详细讨论。\par
 
 
 

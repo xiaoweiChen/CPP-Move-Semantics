@@ -1,54 +1,54 @@
-在引入右值引用之后，我们现在有三种主要的引用调用方式:\par
+引入右值引用之后，有三种主要的引用调用方式:\par
 
 \begin{itemize}
 	\item \textit{\textbf{void foo(const std::string\& arg)}}\par
-	将实参作为const左值引用。\par
+	将实参作为\textit{const}左值引用。\par
 	只有对传递的参数的读访问权。如果类型适合，可以把所有东西都传递给用这种方式声明的函数:\par
 	\begin{itemize}
 		\item[-] 可修改的命名对象
-		\item[-] const命名对象
+		\item[-] \textit{const}命名对象
 		\item[-] 没有名称的临时对象
-		\item[-] 用std::move()标记的对象
+		\item[-] 用\textit{std::move()}标记的对象
 	\end{itemize}
-	语义上的意思是给foo()传递的实参读访问权。这个参数就是我们所说的in参数。
+	语义上的意思是给\textit{foo()}传递的实参读访问权。这个参数就是我们所说的\textit{in}参数。
 	\item \textit{\textbf{void foo(std::string\& arg)}}\par
-	将实参作为非const左值引用。\par
+	将实参作为非\textit{const}左值引用。\par
 	对传递的参数具有写访问权限。即使类型适合，也不能再将所有内容传递给以这种方式声明的函数:\par
 	\begin{itemize}
 		\item[-] 可修改的命名对象
 	\end{itemize}
 	对于所有其他参数，则不进行编译。\par
-	语义上的意思是，让foo()对传递的参数具有读/写访问权限。参数就是输出或输入/输出参数。\par
+	语义上的意思是，让\textit{foo()}对传递的参数具有读/写访问权限。参数就是输出或输入/输出参数。\par
 	\item \textit{\textbf{void foo(std::string\&\& arg)}}\par
-	将实参作为非const右值引用。\par
+	将实参作为非\textit{const}右值引用。\par
 	对传递的参数具有写访问权限。但是，仍然对可以传递的内容有限制:\par
 	\begin{itemize}
 		\item[-] 没有名称的临时对象
 		\item[-] 用\textit{std::move()}标记的对象
 	\end{itemize}
-	语义上的意思是给foo()对传递的参数的写访问权来窃取值。它是一个in参数，附加的约束是调用者不再需要这个值。
+	语义上的意思是给\textit{foo()}对传递的参数的写访问权来窃取值。它是一个\textit{in}参数，附加的约束是调用者不再需要这个值。
 \end{itemize}
 
-右值引用绑定到非const左值引用之外的其他实参。因此，必须引入新的语法，不能仅仅将移动语义作为修改传递参数的函数的一种不同方式来实现。\par
+右值引用绑定到非\textit{const}左值引用之外的其他实参。因此，必须引入新的语法，不能仅仅将移动语义作为修改传递参数的函数的一种不同方式来实现。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{2.4.1 const右值引用}
+\textbf{2.4.1 \textit{const}右值引用}
 
-从技术上讲，还有第四种引用调用方式:\par
+从技术上讲，还有第四种调用引用的方式:\par
 
 \begin{itemize}
 	\item \textit{\textbf{void foo(const std::string\&\& arg)}}\par
-	将实参作为const右值引用。\par
-	对传递的参数具有读访问权，这里的限制是:
+	将实参作为\textit{const}右值引用。\par
+	对传递的参数具有读访问权，这里的限制有:
 	\begin{itemize}
 		\item[-] 没有名称的临时对象
-		\item[-] 用\textit{std::move()}标记的const或非const对象
+		\item[-] 用\textit{std::move()}标记的\textit{const}或非\textit{const}对象
 	\end{itemize}
 \end{itemize}
 
-然而，这种情况没有意义。作为右值引用，允许窃取值，但作为const，则禁止对传递的实参进行任何修改，这本身就是矛盾的。\par
+然而，这种情况没有意义。作为右值引用，允许窃取值，但作为\textit{const}，则禁止对传递的实参进行任何修改，这本身就是矛盾的。\par
 
-尽管如此，创建具有这种行为的对象是非常容易的:只需用\textit{std::move()}标记一个const对象:\par
+尽管如此，创建具有这种行为的对象是非常容易的:只需用\textit{std::move()}标记一个\textit{const}对象:\par
 
 \begin{lstlisting}[caption={}]
 const std::string s{"data"};
@@ -56,7 +56,7 @@ const std::string s{"data"};
 foo(std::move(s)); // would call a function declared as const rvalue reference
 \end{lstlisting}
 
-当声明函数返回带有const的值时，这种情况可能会间接发生:\par
+当声明函数返回带有\textit{const}的值时，这种情况可能会间接发生:\par
 
 \begin{lstlisting}[caption={}]
 const std::string getValue();
@@ -64,7 +64,7 @@ const std::string getValue();
 foo(getValue()); // would call a function declared as const rvalue reference
 \end{lstlisting}
 
-这种情况通常由用于读访问的函数的const左值引用重载。这种情况可能会进行特定实现，但通常没有意义(C++标准库类std::optional<>使用const右值引用)。\par
+这种情况通常由用于\textit{const}左值引用重载。可能会进行特定实现，但通常没有意义(C++标准库类\textit{std::optional<>}使用\textit{const}右值引用)。\par
 
 
 

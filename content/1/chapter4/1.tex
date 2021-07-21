@@ -1,22 +1,22 @@
-移动语义允许对不再需要的值进行优化。如果编译器自动检测到从一个生命周期结束的对象中，它们将自动切换到移动语义。情况是这样的:\par
+移动语义允许对不再需要的值进行优化。如果编译器自动检测到从一个生命周期结束的对象中，将自动切换到移动语义。情况是这样的:\par
 
 \begin{itemize}
-	\item 传递一个临时对象，该对象将在语句之后自动撤销。
+	\item 传递一个临时对象，该对象将在语句之后自动销毁。
 	\item 按值返回一个局部对象。
 \end{itemize}
 
-另外，可以通过\textit{std::move()}标记一个对象来强制使用移动语义。\par
+另外，可以通过\textit{std::move()}标记对象来强制使用移动语义。\par
 
 让编译器来做这些工作更容易，所以移动语义的第一个建议:避免有名称的对象。\par
 
-如下的方式：\par
+例如：\par
 
 \begin{lstlisting}[caption={}]
 MyType x{42, "hello"};
 foo(x); // x not used afterwards
 \end{lstlisting}
 
-可以改成这样:\par
+可以改成:\par
 
 \begin{lstlisting}[caption={}]
 foo(MyType{42,"hello"});
@@ -24,17 +24,17 @@ foo(MyType{42,"hello"});
 
 就会自动启用移动语义。\par
 
-当然，这个建议可能会与其他指导原则冲突，比如源代码的可读性和可维护性。与其使用一个复杂的语句，不如使用多个语句。这种情况下，如果不再需要一个对象(并且知道复制对象可能会花费大量时间)，应该使用\textit{std::move()}:\par
+当然，这个建议可能会与其他指导原则冲突，比如：源代码的可读性和可维护性。与其使用一个复杂的语句，不如使用多个语句。这种情况下，如果不再需要一个对象(并且知道复制对象可能会花费大量时间)，应该使用\textit{std::move()}:\par
 
 \textit{\textbf{foo(std::move(x));}}\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{4.1.1 当你不能避免使用名称}
 
-在有些情况下，不能避免使用\textit{std::move()}，因为必须给对象命名。最典型的例子是:\par
+有些情况下，需要为命名对象使用\textit{std::move()}。最典型的例子是:\par
 
 \begin{itemize}
-	\item 你必须多次使用一个对象。例如，可能会获得一个值，以便在函数或循环中处理它两次:\par
+	\item 必须多次使用一个对象。例如，可能会获得值，以便在函数或循环中处理它两次:\par
 	\begin{lstlisting}[caption={}]
 	std::string str{getData()};
 	...
@@ -42,7 +42,7 @@ foo(MyType{42,"hello"});
 	coll2.push_back(std::move(str)); // move (no longer need the value of str)
 	\end{lstlisting}
 	当在同一个集合中插入值两次或调用两个不同的函数将值存储在某处时，情况也相同。
-	\item 必须处理一个参数。最常见的例子是下面的循环:\par
+	\item 处理参数。最常见的例子是下面的循环:\par
 	\begin{lstlisting}[caption={}]
 	// read and store line by line from myStream in coll
 	std::string line;

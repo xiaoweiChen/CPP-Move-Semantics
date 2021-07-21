@@ -5,7 +5,7 @@
 
 假设我们有以下代码:\par
 
-{\color{red}{basics/motiv03.cpp}}
+{\color{red}{basics/motiv03.cpp}}\par
 
 \begin{lstlisting}[caption={}]
 #include <string>
@@ -58,7 +58,7 @@ int main()
 	\begin{center}
 		\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/2}
 	\end{center}
-	目前为止，我们还没有对这个程序中进行优化。现在，我们有两个向量，\textit{v}和\textit{coll}，以及两个字符串，\textit{s}和它的副本，这也是\textit{coll}的第一个元素。它们都是独立的对象，有自己的内存。\par
+	目前为止，我们还没有对这个程序进行优化。现在，我们有两个vector，\textit{v}和\textit{coll}，以及两个字符串，\textit{s}和它的副本，这也是\textit{coll}的第一个元素。它们都是独立的对象，有自己的内存。\par
 	\item 现在让我们看看下一句，创建了一个新的临时字符串，并再次将其插入vector中:\par
 	\textbf{\textit{coll.push\_back(s+s);}}\par
 	该语句分三个步骤执行:\par
@@ -75,7 +75,7 @@ int main()
 		\begin{center}
 			\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/5}
 		\end{center}
-		这时我们第一次生成代码执行不大合适的地方：创建临时字符串的副本后销毁临时字符串。其实，可以不必分配和释放内存，直接使用原始的临时字符串对象。
+		这是我们第一次生成代码执行不大合适的地方：创建临时字符串的副本后销毁临时字符串。其实，可以不必分配和释放内存，直接使用原始的临时字符串对象。
 	\end{enumerate}
 	\item 下一行中，我们再将\textit{s}插入\textit{coll}中:\par
 	\textbf{\textit{coll.push\_back(s);}}\par
@@ -91,18 +91,18 @@ int main()
 	\end{lstlisting}
 	程序的行为变得有点复杂。按值返回(返回类型不是引用)的应该是\textit{coll}的副本。创建副本意味着必须创建整个vector，及其所有元素的副本。因此，必须为vector中的元素数组分配堆内存，并为每个字符串分配用于保存其值的值分配堆内存。这样，我们需要分配4次内存。\par
 	由于\textit{coll}被销毁，编译器可以执行命名返回值优化(NRVO)。这意味着编译器可以生成代码，使\textit{coll}只是用作返回值。\par
-	可以使用这种优化，不过这可能会改变程序的行为。如果在vector或string对象的复制构造函数中有print语句，则会不看print语句的再次输出，这意味着这种优化改变了程序的功能行为。然而，这是可以的，因为在C++标准中允许这种优化，即使它有副作用。任何人都不应该知道这里有一个副本，是否执行命名返回值优化仅取决于编译器。\par
+	可以使用这种优化，不过这可能会改变程序的行为。如果在vector或string对象的复制构造函数中有print语句，则会不看print语句的再次输出，这意味着这种优化改变了程序的功能。然而，这是可以的，因为在C++标准中允许这种优化，即使它有副作用。任何人都不应该知道这里有一个副本，是否执行命名返回值优化仅取决于编译器。\par
 	假设我们进行了命名返回值优化，在\textit{return}语句的末尾，\textit{coll}现在成为返回值，并调用\textit{s}的析构函数，释放声明\textit{s}时分配的内存:\par
 	\begin{center}
 		\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/7}
 	\end{center}
 	\item 最后，将返回值赋给\textit{v}:\par
 	\textbf{\textit{v = createAndInsert();}}\par
-	这里可以改进的行为:通常的赋值操作符的目标是赋予\textit{v}与赋值源的值相同的值。一般来说，任何值都不应该被修改，并且应该独立于赋值的对象。因此，赋值操作符将创建了一个返回值的副本:\par
+	这里可以改进的行为:通常的赋值操作符的目标是赋予\textit{v}与赋值源的值相同的值。一般来说，任何值都不应该修改，并且应该独立于赋值的对象。因此，赋值操作符将创建了一个返回值的副本:\par
 	\begin{center}
 		\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/8}
 	\end{center}
-	之后，我们就不再需要临时返回值了，可以销毁它:\par
+	之后，就不再需要临时返回值了，可以销毁:\par
 	\begin{center}
 		\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/9}
 	\end{center}
@@ -195,41 +195,41 @@ int main()
 		\begin{center}
 			\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/12}
 		\end{center}
-		从c++ 11开始，我们可以获取不再需要的值。因为编译器知道在执行push\_back()调用之后，临时对象\textit{s+s}将被销毁。因此，调用的是push\_back()的另一个实现，其是对不再需要值的字符串进行复制的优化：我们复制了大小和指向内存的指针，而不是创建拷贝。然而，这种浅复制是不够的;我们还修改了临时对象\textit{s+s}，将其大小设置为0，并将nullptr赋值为新值。其实，s+s被修改了，以便呈现空字符串的状态。重要的是，它不再拥有自己的内存。
-		\item 在语句的结尾，临时字符串\textit{s+s}被销毁。但由于临时字符串不再是初始内存的所有者，析构函数不会释放该内存。\par
+		自C++11起，我们可以获取不再需要的值。因为编译器知道在执行push\_back()调用之后，临时对象\textit{s+s}将被销毁。因此，调用的是push\_back()的另一个实现，其是对不再需要值的字符串进行复制的优化：我们复制了大小和指向内存的指针，而不是创建拷贝。然而，这种浅复制是不够的;还修改了临时对象\textit{s+s}，将其大小设置为0，并将nullptr赋值为新值。其实，s+s被修改了，以便呈现空字符串的状态。重要的是，它不再拥有自己的内存。
+		\item 语句的结尾，临时字符串\textit{s+s}被销毁。但由于临时字符串不再是初始内存的所有者，析构函数不会释放该内存。\par
 		\begin{center}
 			\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/13}
 		\end{center}
 		我们优化了复制过程，将\textit{s+s}的内存所有权转移到它在vector中的副本。\par
-		这一切都是通过编译器自动完成的，编译器可以对即将死亡的对象发出信号，我们可以使用新实现来复制一个从源端窃取值的字符串值。这不是一个技巧，这是一种语义上的移动，通过从底层技术上将值的内存从源字符串移动到它的副本来实现。\par
+		这一切都是通过编译器自动完成的，编译器可以对即将死亡的对象发出信号，可以使用新实现来复制一个从源端窃取值的字符串值。这不是一个技巧，这是一种语义上的移动，通过从底层技术上将值的内存从源字符串移动到它的副本来实现。\par
 	\end{enumerate}
 	\item 下一条语句是我们为C++11版本修改的语句。将\textit{s}插入到\textit{coll}中，但是通过对要插入的字符串\textit{s}调用\textit{std::move()}，语句发生了改变:\par
 	\textit{\textbf{coll.push\_back(std::move(s));}}\par
-	如果没有\textit{std::move()}，就会像第一次调用\textit{push\_back()}一样：vector会创建传递的字符串\textit{s}的副本。这次，我们用\textit{std::move()}标记了\textit{s}，这在意味着明示“这里不再需要这个值”。因此，这里会使用另一个\textit{push\_back()}实现，它会在传递临时对象\textit{s+s}时使用。第三个元素通过将这个值的内存所有权，从\textit{s}转移到副本中，从而来窃取这个值:\par
+	如果没有\textit{std::move()}，就会像第一次调用\textit{push\_back()}一样：vector会创建传递的字符串\textit{s}的副本。这次，我们用\textit{std::move()}标记了\textit{s}，这在意味着“这里不再需要这个值”。因此，这里会使用另一个\textit{push\_back()}实现，会在传递临时对象\textit{s+s}时使用。第三个元素通过将这个值的内存所有权，从\textit{s}转移到副本中，从而来窃取这个值:\par
 	\begin{center}
 		\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/14}
 	\end{center}
 	关于移动语义，请注意以下两点:\par
 	\begin{itemize}
-		\item[-] \textit{std::move(s)}在这里只表示\textit{s}是可移动的。只是说，我不再需要这个值，它允许实现通过在复制值时进行一些优化(比如偷取内存)从而获益。调用者并不知道值是否进行了移动。
+		\item[-] \textit{std::move(s)}在这里只表示\textit{s}是可移动的，只表示不再需要这个值，允许实现通过在复制值时进行一些优化(比如偷取内存)从而获益。调用者并不知道值是否进行了移动。
 		\item[-] 然而，窃取值的优化必须确保源对象仍然处于有效状态。被移动的对象既不会部分销毁，也不会完全销毁。C++标准库为它的类型进行了规定:标记为\textit{std::move()}的对象执行操作后，该对象处于有效，但未定义的状态。\par
 		以上，就是在这条语句执行完成后会发生的事\par
 		\textit{\textbf{coll.push\_back(std::move(s));}}\par
 		这里保证\textit{s}仍然是有效的字符串。这就像使用不知道传递了哪个值的字符串参数一样。\par
-		注意，它也不能保证字符串要么有旧值，要么为空。它的值由运行时库实现者决定。通常，实现者可以对\textit{std::move()}操作的对象做任何事，只要保持对象的有效状态。保证的理由，稍后讨论。
+		注意，它也不能保证字符串要么有旧值，要么为空，由运行时库实现者决定。通常，实现者可以对\textit{std::move()}操作的对象做任何事，只要保持对象的有效状态。保证的理由，稍后讨论。
 	\end{itemize}
 	
-	\item createAndInsert()最后的return语句为:\par
+	\item \textit{createAndInsert()}最后的return语句为:\par
 	\begin{lstlisting}[caption={}]
 		return coll;
 	}
 	\end{lstlisting}
-	是否生成具有指定返回值优化的代码取决于编译器，\textit{coll}只是成为了返回值。但是，如果不使用这种优化，return语句仍然是从即将失效的源创建对象的情况。如果没有使用指定的返回值优化，仍然会使用移动语义，返回值会从\textit{coll}中窃取值。在最坏的情况下，必须从源文件复制成员的大小、容量和指向内存的指针(总共12或24个字节)到返回值中，并在源文件中为这些成员赋值。\par
+	是否生成具有指定返回值优化的代码取决于编译器，\textit{coll}只是成为了返回值。但是，如果不使用这种优化，return语句仍然是从即将失效的源创建对象的情况。如果没有使用指定的返回值优化，仍然会使用移动语义，返回值会从\textit{coll}中窃取值。最坏的情况下，必须从源文件复制成员的大小、容量和指向内存的指针(总共12或24个字节)到返回值中，并在源文件中为这些成员赋值。\par
 	我们假设进行了返回值优化。在return语句中，\textit{coll}成为返回值，并调用\textit{s}的析构函数，不再需要释放任何内存，因为内存移到了\textit{coll}的第三个元素中:\par
 	\begin{center}
 		\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/15}
 	\end{center}
-	\item 最后，我们来给\textit{v}赋值：\par
+	\item 最后，来给\textit{v}赋值：\par
 	\textit{\textbf{v = createAndInsert();}}\par
 	同样可以从移动语义中获益:必须从一个即将销毁的临时返回值中复制(这里是赋值)一个值。\par
 	现在，移动语义允许从源vector转移值的赋值操作符:\par
@@ -237,7 +237,7 @@ int main()
 		\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/16}
 	\end{center}
 	同样，临时对象不会(部分地)销毁。它进入了某个状态，但我们不知道它的值。\par
-	但是，在赋值之后，语句的末尾会销毁(修改过的)临时返回值:\par
+	但在赋值之后，语句的末尾会销毁(修改过的)临时返回值:\par
 	\begin{center}
 		\includegraphics[width=1.0\textwidth]{content/1/chapter1/images/17}
 	\end{center}
@@ -251,9 +251,9 @@ int main()
 	\item 临时vector及其元素的分配方式
 \end{itemize}
 
-在第二种情况下，优化是在我们的帮助下完成的。通过添加\textit{std::move()}，说明不再需要\textit{s}的值。所有其他优化都生效了，因为编译器知道对象即将销毁，所以编译器也可以使用移动语义的优化实现。\par
+第二种情况下，优化是在我们的帮助下完成的。通过添加\textit{std::move()}，说明不再需要\textit{s}的值。所有其他优化都生效了，因为编译器知道对象即将销毁，所以编译器也可以使用移动语义的优化实现。\par
 
-这意味着返回字符串向量，并将其赋值给一个现有向量不再是性能问题。我们可以像使用整型一样使用字符串向量，从而获得更好的性能。在实践中，用移动语义重新编译代码可以将速度提高10\%到40\%(取决于现有代码的难易程度)。\par
+这意味着返回字符串向量，并将其赋值给现有向量不再有性能问题。我们可以像使用整型一样使用字符串向量，从而获得更好的性能。在实践中，用移动语义重新编译代码可以将速度提高10\%到40\%(取决于现有代码的难易程度)。\par
 
 
 

@@ -1,11 +1,11 @@
 \begin{itemize}
-	\item 右值引用使用\&\&声明，没有const。
-	\item 可以由没有名称的临时对象或用\textit{std::move()}标记的非const对象初始化。
+	\item 右值引用使用\&\&声明，没有\textit{const}。
+	\item 可以由没有名称的临时对象或用\textit{std::move()}标记的非\textit{const}对象初始化。
 	\item 右值引用延长了由返回值的对象的生命周期。
-	\item \textit{std::move()}对应的是右值引用类型的static\_cast。这允许我们将命名对象传递给右值引用。
-	\item \textit{std::move()}标记的对象也可以通过const左值引用，传递给接受实参但不接受非const左值引用的函数。
+	\item \textit{std::move()}对应的是右值引用类型的\textit{static\_cast}。这允许我们将命名对象传递给右值引用。
+	\item \textit{std::move()}标记的对象也可以通过\textit{const}左值引用，传递给接受实参但不接受非\textit{const}左值引用的函数。
 	\item 标记为\textit{std::move()}的对象也可以传递给按值接受参数的函数。在这种情况下，移动语义用于初始化参数，这可以使按值调用非常高效。
-	\item const右值引用是可能的，但针对它们的实现通常没有意义。
+	\item \textit{const}右值引用是可能的，但针对它们的实现通常没有意义。
 	\item 已移动的对象处于有效但未定义的状态，C++标准库为其类型保证了这一点。您仍然可以(重新)使用它们，只要您不对它们的价值做任何期望。
 \end{itemize}
 

@@ -1,4 +1,4 @@
-让我们来讨论一下特殊成员函数，特别是确切地指定何时以及如何生成特殊的拷贝和移动成员函数。\par
+让我们来讨论一下特殊成员函数，特别是确切地指定何时以及如何生成特殊的复制和移动成员函数。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{3.3.1 特殊的成员函数}
@@ -7,8 +7,8 @@
 
 \begin{itemize}
 	\item 默认构造函数
-	\item 拷贝构造函数
-	\item 拷贝赋值运算符
+	\item 复制构造函数
+	\item 复制赋值运算符
 	\item 移动构造函数(C++11)
 	\item 移动赋值操作符(C++11)
 	\item 析构函数
@@ -19,28 +19,26 @@
 图3.1概述了什么时候会根据声明的构造函数和特殊成员函数，自动生成特殊成员函数:\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{Figure 3.1 自动生成特殊成员函数的规则}\par
+\textbf{图3.1 自动生成特殊成员函数的规则}\par
 
 \begin{center}
 	\includegraphics[width=1.0\textwidth]{content/1/chapter3/images/1}
 \end{center}
 
-你可以在这个表格中看到一些基本的规则:\par
+可以在这个表格中看到一些基本的规则:\par
 
 \begin{itemize}
 	\item 只有在没有用户声明其他构造函数的情况下，才会自动声明默认构造函数。
-	\item 特殊的复制成员函数和析构函数禁用了移动支持。自动生成特殊的移动成员函数是禁用的(除非也声明了移动操作)。但是，移动对象的请求通常是有效的，因为拷贝成员函数用作后备(除非特殊的移动成员函数显式删除)。
+	\item 特殊的复制成员函数和析构函数禁用了移动支持。自动生成特殊的移动成员函数是禁用的(除非也声明了移动操作)。但是，移动对象的请求通常是有效的，因为复制成员函数用作后备(除非特殊的移动成员函数显式删除)。
 	\item 特殊的移动成员函数禁用了正常的复制和赋值。复制和其他移动特殊成员函数将删除，这样只能移动(分配)对象，而不能复制(分配)对象(除非还声明了其他操作)。
 \end{itemize}
-
-来看一些细节。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{3.3.2 默认情况下，有复制和移动}
 
-在编写时，默认情况下，为类生成复制和移动特殊成员函数。\par
+在默认编译情况下，为类生成复制和移动特殊成员函数。\par
 
-假设类Person的声明如下:\par
+假设类\textit{Person}的声明如下:\par
 
 \begin{lstlisting}[caption={}]
 class Person {
@@ -55,7 +53,7 @@ public:
 };
 \end{lstlisting}
 
-这种情况下，Person可以复制和移动:\par
+这种情况下，\textit{Person}可以复制和移动:\par
 
 \begin{lstlisting}[caption={}]
 std::vector<Person> coll;
@@ -70,7 +68,7 @@ coll.push_back(std::move(p)); // OK, moves p
 
 在声明复制特殊成员函数(或析构函数)时，禁用了移动特殊成员函数的自动生成:\par
 
-假设类Person的声明如下:\par
+假设\textit{Person}的声明如下:\par
 
 \begin{lstlisting}[caption={}]
 class Person {
@@ -85,7 +83,7 @@ public:
 };
 \end{lstlisting}
 
-因为退阶机制是有效的，所以复制和移动一个Person可以编译，但移动是作为复制执行的:\par
+因为退阶机制是有效的，所以复制和移动\textit{Person}可以编译，但移动是作为复制执行的:\par
 
 \begin{lstlisting}[caption={}]
 std::vector<Person> coll;
@@ -95,18 +93,18 @@ coll.push_back(p); // OK, copies p
 coll.push_back(std::move(p)); // OK, copies p
 \end{lstlisting}
 
-因此，用=default声明一个特殊成员函数与根本不声明它是不同的。复制构造函数和复制赋值操作符是用户声明的，它禁用了移动构造和移动赋值，以便移动到副本。声明的析构函数具有相同的效果。\par
+因此，用\textit{=default}声明一个特殊成员函数与根本不声明它是不同的。复制构造函数和复制赋值操作符是用户声明的，它禁用了移动构造和移动赋值，以便移动到副本。声明的析构函数具有相同的效果。\par
 
 您可能想知道为什么声明的析构函数会禁用移动语义。关于已移动状态那一章讨论了具体的例子，一个类的析构函数导致生成的移动语义不能正常工作。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{3.3.4 声明移动，禁用复制}
 
-如果声明了的移动语义，就禁用了复制语义。复制特殊成员函数被删除。\par
+如果声明了的移动语义，就禁用了复制语义。删除复制特殊成员函数。\par
 
-换句话说，如果移动构造函数或移动赋值操作符显式声明(使用=default实现、生成，或使用=delete禁用)，那么通过使用=delete声明它们，就禁用了调用复制构造函数和复制赋值操作符。\par
+换句话说，如果移动构造函数或移动赋值操作符显式声明(使用\textit{=default}实现、生成，或使用\textit{=delete}禁用)，那么通过使用\textit{=delete}声明，就禁用了调用复制构造函数和复制赋值操作符。\par
 
-假设类Person的声明如下:\par
+假设\textit{Person}的声明如下:\par
 
 \begin{lstlisting}[caption={}]
 class Person {
@@ -133,14 +131,14 @@ coll.push_back(std::move(p)); // OK, moves p
 coll.push_back(Person{"Ben", "Cook"}); // OK, moves temporary person into coll
 \end{lstlisting}
 
-同样，使用=default声明特殊成员函数与根本不声明不同。调用的后果更加严重:复制对象的尝试将不无法编译。\par
+同样，使用\textit{=default}声明特殊成员函数与根本不声明不同。调用的后果更加严重:复制对象的尝试将无法编译。\par
 
-支持移动操作但不支持复制操作的类是有意义的。可以使用这种只移动类型传递资源的所有权或句柄，而无需共享或复制它们。在C++标准库中也有一些只移动的类型(例如，I/O流类、线程类和\textit{std::unique\_ptr<>})，详细信息请参见关于仅移动类型的章节。\par
+支持移动操作但不支持复制操作的类是有意义的。可以使用这种只移动类型传递资源的所有权或句柄，而无需共享或复制。在C++标准库中也有一些只移动的类型(例如，输入输出流、线程和\textit{std::unique\_ptr<>})，详细信息请参见关于仅移动类型的章节。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{3.3.5 删除移动没有意义}
 
-出于同样的原因，如果将移动构造函数声明为delete，则不能移动(已禁用此操作，没有使用任何退阶)和不能复制(因为声明的移动构造函数禁用了复制操作):\par
+出于同样的原因，如果将移动构造函数声明为\textit{delete}，则不能移动(已禁用此操作，没有使用任何退阶)和不能复制(因为声明的移动构造函数禁用了复制操作):\par
 
 \begin{lstlisting}[caption={}]
 class Person {
@@ -181,9 +179,9 @@ coll.push_back(p); // OK: copying enabled
 coll.push_back(std::move(p)); // ERROR: moving disabled
 \end{lstlisting}
 
-在这种情况下，=delete禁用了退阶机制(因此也与根本不声明它不同)。编译器找到该声明并报告该调用为错误。\par
+这种情况下，\textit{=delete}禁用了退阶机制(因此也与根本不声明它不同)。编译器找到该声明并报告该调用为错误。\par
 
-支持复制但在调用移动时失败的类型没有任何意义。对于此类的用户，复制有时可行，有时不行。作为指导原则:永不=delete特殊的move成员函数。如果想要同时禁用复制和移动，删除复制的特殊成员函数就足够了。\par
+支持复制但在调用移动时失败的类型没有任何意义。对于此类的用户，复制有时可行，有时不行。作为指导原则:永不\textit{=delete}特殊的移动成员函数。如果想要同时禁用复制和移动，删除复制的特殊成员函数就足够了。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{3.3.6 禁用移动语义与启用复制语义}
@@ -202,7 +200,7 @@ public:
 };
 \end{lstlisting}
 
-因为没有发现生成的特殊的移动成员函数，所以现在会复制一个临时Customer，甚至标记为\textit{std::move()}的Customer对象:\par
+因为没有发现生成的特殊的移动成员函数，所以现在会复制临时的\textit{Customer}，甚至标记为\textit{std::move()}的\textit{Customer}对象:\par
 
 \begin{lstlisting}[caption={}]
 std::vector<Customer> customers;
@@ -213,7 +211,7 @@ customers.push_back(std::move(customers[0])); // OK, falls back to copying
 
 但是，通常最好是实现特殊的移动成员函数，来修复默认生成的移动操作所存在的任何问题。关于迁移状态的章节将讨论实践中的例子。\par
 
-请注意，只有声明特殊的复制成员函数才会违反“5规则”，我们将在后面详细讨论这个规则。必须声明特殊的复制成员函数，但也不能声明特殊的移动成员函数(删除和默认都不能工作，实现它们会使类变得不必要的复杂)。因此，如果显式地声明一个复制特殊成员函数只是为了禁用移动语义，请添加一个注释，以确保该声明不会被特殊移动成员函数的声明删除或扩展。\par
+请注意，只有声明特殊的复制成员函数才会违反“5规则”，我们将在后面详细讨论这个规则。必须声明特殊的复制成员函数，但也不能声明特殊的移动成员函数(删除和默认都不能工作，实现它们会使类变得复杂)。因此，如果显式地声明一个复制特殊成员函数只是为了禁用移动语义，请添加一个注释，以确保该声明不会被特殊移动成员函数的声明删除或扩展。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{3.3.7 为禁用移动语义的成员进行移动}
@@ -245,7 +243,7 @@ public:
 };
 \end{lstlisting}
 
-生成的移动构造函数将移动id字符串，但复制客户的cust:\par
+生成的移动构造函数将移动\textit{id}字符串，但复制客户的\textit{cust}:\par
 
 \begin{lstlisting}[caption={}]
 Invoice i;
@@ -271,7 +269,7 @@ private:
 这里缺少noexcept，我们将在后面关于noexcept的章节中介绍它，但我们会在这里提到相应的保证。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{拷贝构造函数}
+\textbf{复制构造函数}
 
 当应用以下所有内容时，将自动生成复制构造函数:\par
 
@@ -280,7 +278,7 @@ private:
 	\item 用户没有声明移动赋值操作符
 \end{itemize}
 
-如果生成(隐式或使用=default)，复制构造函数具有以下行为:\par
+如果生成(隐式或使用\textit{=default})，复制构造函数具有以下行为:\par
 
 \begin{lstlisting}[caption={}]
 MyClass(const MyClass& obj) noexcept-specifier
@@ -288,7 +286,7 @@ MyClass(const MyClass& obj) noexcept-specifier
 }
 \end{lstlisting}
 
-生成的复制构造函数，首先将源对象传递给基类的最佳匹配的复制构造函数。(记住，复制构造函数总是在自顶向下的基础上调用)。它倾向于使用具有相同声明的复制构造函数(通常声明为const\&)。如果不可用，它可能会调用下一个最佳匹配的构造函数(例如，复制构造函数模板)。然后，复制类的所有成员(同样使用最佳匹配)。\par
+生成的复制构造函数，首先将源对象传递给基类的最佳匹配的复制构造函数。(记住，复制构造函数总是在自顶向下的基础上调用)。它倾向于使用具有相同声明的复制构造函数(通常声明为\textit{const\&})。如果不可用，可能会调用下一个最佳匹配的构造函数(例如，复制构造函数模板)。然后，复制类的所有成员(同样使用最佳匹配)。\par
 
 生成的复制构造函数声明为noexcept，除非所有复制操作(所有基类的复制构造函数和所有成员的复制构造函数)都有这个保证。\par
 
@@ -304,7 +302,7 @@ MyClass(const MyClass& obj) noexcept-specifier
 	\item 用户没有声明析构函数
 \end{itemize}
 
-如果生成(隐式或使用=default)，移动构造函数具有以下行为:\par
+如果生成(隐式或使用\textit{=default})，移动构造函数具有以下行为:\par
 
 \begin{lstlisting}[caption={}]
 MyClass(MyClass&& obj) noexcept-specifier
@@ -326,7 +324,7 @@ MyClass(MyClass&& obj) noexcept-specifier
 	\item 用户没有声明移动赋值操作符
 \end{itemize}
 
-如果生成(隐式或使用=default)，复制赋值操作符大致具有以下行为:
+如果生成(隐式或使用\textit{=default})，复制赋值操作符大致具有以下行为:
 
 \begin{lstlisting}[caption={}]
 MyClass& operator= (const MyClass& obj) noexcept-specifier {
@@ -354,7 +352,7 @@ MyClass& operator= (const MyClass& obj) noexcept-specifier {
 	\item 用户没有声明析构函数
 \end{itemize}
 
-如果生成(隐式或使用=default)，移动赋值操作符大致具有以下行为:\par
+如果生成(隐式或使用\textit{=default})，移动赋值操作符大致具有以下行为:\par
 
 \begin{lstlisting}[caption={}]
 MyClass& operator= (MyClass&& obj) noexcept-specifier {
@@ -372,7 +370,7 @@ MyClass& operator= (MyClass&& obj) noexcept-specifier {
 Base::operator=(std::move(obj)); // - perform move assignments for base class members
 \end{lstlisting}
 
-在本例中，我们将对象标记为基类的特定上下文，基类不能看到在该类中引入的成员。因此，派生成员具有有效但未定义的状态，但仍然可以使用新成员的值。\par
+本例中，将对象标记为基类的特定上下文，基类不能看到在该类中引入的成员。因此，派生成员具有有效但未定义的状态，但仍然可以使用新成员的值。\par
 
 生成的赋值操作符也不会检查对象对自赋值。因此，在默认行为中，操作符将把每个成员都赋值给自身，这通常意味着成员接收一个有效但未定义的值。如果这很重要，需要自己实现操作符。\par
 
@@ -384,11 +382,11 @@ Base::operator=(std::move(obj)); // - perform move assignments for base class me
 其他特殊成员函数对移动语义没有那么重要的作用:\par
 
 \begin{itemize}
-	\item 析构函数对于移动语义没有什么特别之处，除了它们的声明禁用了移动操作的自动生成。
+	\item 析构函数对于移动语义没有什么特别之处，除了声明禁用了移动操作的自动生成。
 	\item 如果没有声明其他构造函数，默认构造函数(“不那么特殊”的特殊成员函数)仍然会自动生成。也就是说，移动构造函数的声明禁用了默认构造函数的生成。
 \end{itemize}
 
-但请注意，当谈到已移动状态时，这些特殊的成员函数发挥了作用。默认构造函数的状态通常是被移出对象的“自然”状态，而移出对象应该是可销毁的。\par
+但请注意，当谈到已移动状态时，这些特殊的成员函数发挥了作用。默认构造函数的状态通常是已移动对象的“自然”状态，而已移动对象是可销毁的。\par
 
 
 
