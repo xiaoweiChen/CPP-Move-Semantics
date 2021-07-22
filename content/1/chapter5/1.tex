@@ -1,16 +1,16 @@
-在C++11之前，当为那些复制开销很大的成员实现getter时，我们有以下几种选择:\par
+在C++11之前，当为复制开销很大的成员实现getter时，有以下几种选择:\par
 
 \begin{itemize}
-	\item 传值返回
+	\item 返回值
 	\item 通过左值引用返回
 \end{itemize}
 
-让我们简单地讨论一下这些方案。\par
+简单地讨论一下这些方案。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{5.1.1 传值返回}
 
-一个按值返回的getter看起来是这样的(记住:不要使用const按值返回，否则禁用移动语义):\par
+按值返回的getter看起来是这样的(记住:不要使用\textit{const}按值返回，否则禁用移动语义):\par
 
 \begin{lstlisting}[caption={}]
 class Person
@@ -25,9 +25,9 @@ public:
 };
 \end{lstlisting}
 
-这段代码是安全的，但每次获取name时，都可能复制name。\par
+这段代码是安全的，但每次获取\textit{name}时，都可能复制\textit{name}。\par
 
-例如，只是检查是否有一个没名字的人会有很大的开销:\par
+例如，只是检查是否有没名字的人会有很大的开销:\par
 
 \begin{lstlisting}[caption={}]
 std::vector<Person> coll;
@@ -59,9 +59,9 @@ public:
 };
 \end{lstlisting}
 
-这样更快，但不安全，因为调用者必须确保返回的引用引用的对象的生命足够长。实际上，使用返回引用值比原始对象的时间长的话，会有生命周期上的风险。\par
+这样更快，但不安全，因为调用者必须确保返回引用的对象生命周期足够长。实际上，使用返回引用值比原始对象的时间长的话，会有生命周期上的风险。\par
 
-踩入这种陷阱的一种是使用基于范围的for循环，如下所示:\par
+会踩入这种陷阱的一种方式是使用基于范围的for循环，如下所示:\par
 
 \begin{lstlisting}[caption={}]
 for (char c : returnPersonByValue().getName()) { // OOPS: undefined behavior
@@ -71,7 +71,7 @@ for (char c : returnPersonByValue().getName()) { // OOPS: undefined behavior
 }
 \end{lstlisting}
 
-注意，在循环头的右边有一个函数，它返回一个我们用getter引用的临时对象。但是，定义了基于范围的for循环，使上面的代码等价于以下代码:\par
+注意，循环的右边有一个函数，它返回一个我们用getter引用的临时对象。但是，定义了基于范围的for循环，使上面的代码等价于以下代码:\par
 
 \begin{lstlisting}[caption={}]
 reference range = returnPersonByValue().getName();
@@ -84,16 +84,16 @@ for (auto pos = range.begin(), end = range.end(); pos != end; ++pos) {
 }
 \end{lstlisting}
 
-在开始迭代之前，我们初始化reference1，我们必须使用传递的范围两次(一次调用begin()，一次为其调用end())，并希望避免创建副本(这可能代价很高，甚至不可能)。一般来说，引用会延长所引用内容的生命周期。在本例中，range并不引用由returnPersonByValue()返回的Person，而range指向getName()的返回值，它是对返回的Person的引用。因此，range扩展了引用的生命周期，而不是引用所引用的临时对象的生命周期。因此，在第一个语句的末尾，返回的临时对象将被销毁，并且在遍历名称的字符时使用对已销毁对象名称的引用。\par
+开始迭代之前，初始化\textit{reference1}，必须使用传递的范围两次(一次调用begin()，一次调用end())，并希望避免创建副本(这可能代价很高，甚至不可能)。一般来说，引用会延长所引用内容的生命周期。在本例中，\textit{range}并不引用由\textit{returnPersonByValue()}返回的\textit{Person}，而\textit{range}指向\textit{getName()}的返回值，是对返回的\textit{Person}的引用。因此，\textit{range}扩展了引用的生命周期。因此，在第一个语句的末尾，返回的临时对象将销毁，并且在遍历名称的字符时使用对已销毁对象名称的引用。\par
 
-在最好的情况下，我们在这里得到一个核心转储(段错误)，这样我们就可以看到出现了明显的错误。最坏的情况是，一旦发布了软件，就会出现致命的未定义行为。\par
+最好的情况下，在这里会得到一个核心转储(段错误)，这样就可以看到出现了明显的错误。最坏的情况是，发布了软件，并出现了未定义行为。\par
 
-如果getter按值返回名称，这样的代码就不会有问题。这样，range将扩展名称副本的生存期，以便我们可以使用该名称直到range的生存期结束。\par
+如果getter按值返回名称，这样的代码就不会有问题。这样，\textit{range}将扩展名称副本的生存期，以便我们使用该名称直到\textit{range}的生存期结束。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{5.1.3 使用移动语义解决困境}
 
-通过移动语义，我们现在有了解决这个困境的方法。如果这样做是安全的，我们可以通过引用返回。如果可能遇到生命周期问题，我们可以通过值返回。\par
+通过移动语义，就可以解决这个困境的方法。如果这样做安全，可以通过引用返回。如果遇到生命周期的问题，可以通过值返回。\par
 
 方法如下:\par
 
@@ -113,11 +113,11 @@ public:
 };
 \end{lstlisting}
 
-用不同的引用限定符重载getter，方法与重载带有\&\&和const\&形参的函数相同:\par
+用不同的引用限定符重载getter，方法与重载带有\&\&和\textit{const}\&形参的函数相同:\par
 
 \begin{itemize}
-	\item 带有\&\&限定符的版本是有不再需要值的对象时使用(一个即将死亡的对象或用\textit{std::move()}标记的对象)。
-	\item 带有const\&限定符的版本用于所有其他情况。它总是合适的，但只是在我们无法获得\&\&版本时的备选方案。因此，如果有一个不会销毁的对象或没标记为\textit{std::move()}，则使用此函数。
+	\item 带有\&\&限定符的是有不再需要值的对象时使用(一个即将死亡的对象或用\textit{std::move()}标记的对象)。
+	\item 带有\textit{const}\&限定符的版本用于所有其他情况。总是合适的，但只是无法获得\&\&版本时的备选方案。因此，如果有一个不会销毁的对象或没标记为\textit{std::move()}，就会使用此函数。
 \end{itemize}
 
 现在的性能和安全性都很好:\par
@@ -142,12 +142,12 @@ for (char c : returnPersonByValue().getName()) { // 4) safe and fast (uses move(
 }
 \end{lstlisting}
 
-语句1)和3)使用const\&的版本，因为有一个对象没有被\textit{std::move()}标记。语句2)和4)使用\&\&的版本，因为我们为一个临时对象调用getName()。因为临时对象即将销毁，getter可以将成员名移出作为返回值，这意味着我们不必为返回值分配新的内存，我们可以窃取了成员的值。\par
+语句1)和3)使用\textit{const}\&的版本，因为有一个对象没有使用\textit{std::move()}标记。语句2)和4)使用\&\&的版本，因为我们为一个临时对象调用\textit{getName()}。因为临时对象即将销毁，getter可以将成员名移出作为返回值，这意味着不必为返回值分配新的内存，可以窃取了成员的值。\par
 
-您可能还记得，return语句不应该使用\textit{std::move()}来返回已经销毁的局部对象。在本例中，我们不返回任何局部对象，而是返回一个成员，其生存期不以成员函数的结束为结束。\par
+您可能还记得，return语句不应该使用\textit{std::move()}来返回已经销毁的局部对象。本例中，不返回任何局部对象，而是返回一个成员，其生存期不以成员函数的结束为结束。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{\textit{std::move()}用于成员函数}
+\textbf{\textit{std::move()}用于成员函数中}
 
 请注意，这个特性意味着即使在调用成员函数时也可以使用\textit{std::move()}。例如:\par
 
@@ -162,9 +162,9 @@ void foo()
 }
 \end{lstlisting}
 
-使用getName()时，使用std::move()将提高程序的性能。不返回对const std::string的引用(只能复制)，返回值是作为非const字符串返回的p的移动名，因此push\_back()可以使用移动语义将其移动到coll中。通常，在这个调用之后，p处于有效但未定义的状态。\par
+使用\textit{getName()}时，使用\textit{std::move()}将提高程序的性能。不返回对\textit{const} std::string的引用(只能复制)，返回值是作为非\textit{const}字符串返回的\textit{p}的移动名，因此\textit{push\_back()}可以使用移动语义将其移动到\textit{coll}中。通常，在这之后，\textit{p}处于有效但未定义的状态。\par
 
-关于在C++标准库中使用此特性的示例，请参见class std::optional<>。\par
+关于在C++标准库中使用此特性的示例，请参见std::optional<>。\par
 
 
 
