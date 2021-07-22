@@ -1,4 +1,4 @@
-任何复制构造函数、复制赋值或析构函数的声明都禁用了对医用语义的自动支持。这也适用于多态基类。然而，还有一些其他方面需要考虑。\par
+任何复制构造函数、复制赋值或析构函数的声明都禁用了对移动语义的自动支持。这也适用于多态基类。然而，还有一些其他方面需要考虑。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{4.4.1 实现多态基类}
@@ -15,9 +15,9 @@ class GeoObj {
 };
 \end{lstlisting}
 
-在这个基类中，移动语义是禁用的，如果我们移动一个GeoObj对象，基类中声明的成员不会自动支持移动语义。如果有一个受保护的复制构造函数和一个删除的赋值操作符，这也适用，通常在多态基类中应该有这样的操作符，以避免切片问题。\par
+这个基类中，禁用移动语义，如果移动\textit{GeoObj}对象，基类中声明的成员不会自动支持移动语义。如果有受保护的复制构造函数和一个删除的赋值操作符也适用，通常在多态基类中应该有这样的操作符，避免切片问题。\par
 
-只要基类不引入成员，不支持移动语义就没有效果。但是，如果我们在这个基类中有一个开销很大的成员，那么已经禁用了对移动支持。例如:\par
+只要基类不引入成员，不支持移动语义就没有效果。但是，如果这个基类中有一个开销很大的成员，就已经禁用了对移动语义的支持。例如:\par
 
 \begin{lstlisting}[caption={}]
 class GeoObj {
@@ -32,12 +32,12 @@ public:
 };
 \end{lstlisting}
 
-要再次启用移动语义，可以显式声明移动操作为默认值。但正如我们刚刚了解到的，这禁用了复制特殊成员函数。因此，如果您想要使用这些函数，就必须显式地提供。\par
+要再次启用移动语义，可以显式声明移动操作为默认值。但正如我们刚刚了解到的，这禁用了复制特殊成员函数。因此，如果想要使用这些函数，就必须显式地提供。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{处理切片}
 
-但是，有切片的问题。考虑以下代码，使用基类GeoObj的引用作为派生类Circle的对象:\par
+但是，有切片的问题。考虑以下代码，使用基类\textit{GeoObj}的引用作为派生类\textit{Circle}的对象:\par
 
 \begin{lstlisting}[caption={}]
 Circle c1{ ... }, c2{ ... };
@@ -46,9 +46,9 @@ GeoObj& geoRef{c1};
 geoRef = c2; // OOPS: uses GeoObj::operator=() and assigns no Circle members
 \end{lstlisting}
 
-因为我们为GeoObj调用赋值操作符，而且该操作符不是虚操作符，所以编译器调用GeoObj::operator=()，不处理任何派生类的任何成员。即使用virtual声明赋值操作符也没有帮助，因为派生类的操作符不会覆盖基类的赋值操作符(第二个操作数的形参类型不同)。\par
+为\textit{GeoObj}调用赋值操作符，而且该操作符不是虚操作符，所以编译器调用\textit{GeoObj::operator=()}，不处理任何派生类的成员。即使用\textit{virtual}声明赋值操作符也没有帮助，因为派生类的操作符不会覆盖基类的赋值操作符(第二个操作数的形参类型不同)。\par
 
-为了避免这个问题，应该禁用在多态类层次结构中使用赋值操作符。此外，如果类不是抽象的，还应该避免使用公共复制构造函数来禁用到基类的隐式类型转换。因此，具有移动语义(和成员)的多态基类应该如下声明:\par
+为了避免这个问题，应该禁用在多态类层次结构中使用赋值操作符。此外，如果不是抽象类，还应该避免使用公共复制构造函数来禁用到基类的隐式类型转换。因此，具有移动语义(和成员)的多态基类应该如下声明:\par
 
 \begin{lstlisting}[caption={}]
 class GeoObj {
@@ -74,9 +74,9 @@ protected:
 参见{\color{red}{poly/geoobj.hpp}}获取完整的头文件。
 
 \hspace*{\fill} \par %插入空行
-\textbf{4.4.2 实现多态派生类}
+\textbf{4.4.2 实现派生类的多态}
 
-一个多态的派生类可能看起来如下(参见poly/polygon.hpp的完整头文件):\par
+派生类的多态看起来如下所示(参见poly/polygon.hpp的完整头文件):\par
 
 \begin{lstlisting}[caption={}]
 class Polygon : public GeoObj {
@@ -88,7 +88,7 @@ public:
 };
 \end{lstlisting}
 
-通常，在多态派生类中不需要声明特殊的成员函数。特别是，不需要再次声明虚析构函数(除非必须实现)。再次声明析构函数(无论它是否是虚函数)将禁用派生类成员(这里是vector)对移动语义的自动支持:\par
+通常，多态派生类中不需要声明特殊的成员函数。特别是，不需要再次声明虚析构函数(除非必须实现)。再次声明析构函数(无论是否是虚函数)将禁用派生类成员(这里是vector)对移动语义的支持:\par
 
 \begin{lstlisting}[caption={}]
 class Polygon : public GeoObj {
@@ -101,7 +101,7 @@ public:
 };
 \end{lstlisting}
 
-然而，在不声明析构函数的情况下，移动语义适用于Polygon成员、name和points。考虑以下程序:\par
+在不声明析构函数的情况下，移动语义适用于\textit{Polygon}成员、\textit{name}和\textit{points}。\par
 
 {\color{red}{poly/polygon.cpp}}
 
@@ -129,9 +129,9 @@ polygon 'Poly1' over (1,1) (1,9) (9,9) (9,1) \\
 polygon 'Poly1' over (1,1) (1,9) (9,9) (9,1) 
 \end{tcolorbox}
 
-对于这两个成员，name和points，值都从p0移动到p2。\par
+对于这两个成员，\textit{name}和\textit{points}，值都从\textit{p0}移动到\textit{p2}。\par
 
-注意，如果你必须在Polygon类中实现移动构造函数，需要特别注意提供正确的不例外条件。\par
+注意，如果必须在\textit{Polygon}类中实现移动构造函数，需要特别注意提供正确的条件。\par
 
 
 
