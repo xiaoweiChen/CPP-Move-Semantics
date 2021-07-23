@@ -8,7 +8,7 @@ rvFunc(s); // ERROR: passing an lvalue to an rvalue reference
 rvFunc(std::move(s)); // OK, passing an xvalue
 \end{lstlisting}
 
-但请注意，有时传递lvalue似乎是可行的。例如:\par
+但请注意，有时传递lvalue是可行的。例如:\par
 
 \begin{lstlisting}[caption={}]
 void rvFunc(std::string&&); // forward declaration
@@ -16,9 +16,9 @@ void rvFunc(std::string&&); // forward declaration
 rvFunc("hello"); // OK, although "hello" is an lvalue
 \end{lstlisting}
 
-记住，字符串文字作为表达式使用时是lvalue。因此，不能将它们传递给rvalue引用。但是，这里涉及到一个隐藏的操作，因为实参的类型(6个常量字符的数组)与形参的类型不匹配。隐式类型转换由string构造函数执行，它创建了一个没有名称的临时对象。\par
+记住，字符串文字作为表达式使用时是lvalue。因此，不能传递给rvalue引用。但是，这里涉及到一个隐藏的操作，因为实参的类型(6个常量字符的数组)与形参的类型不匹配。隐式类型转换由string构造函数执行，创建了一个没有名称的临时对象。\par
 
-因此，我们真正的使用方式如下:\par
+因此，真正的使用方式如下:\par
 
 \begin{lstlisting}[caption={}]
 void rvFunc(std::string&&); // forward declaration

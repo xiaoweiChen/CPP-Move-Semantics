@@ -17,7 +17,7 @@ void rvFunc(std::string&& str)
 }
 \end{lstlisting}
 
-decltype(str)表达式总是产生str类型，即std::string\&\&。在表达式中任何需要该类型的地方都可以使用该类型。类型特征(类型函数如std::is\_same<>)会帮助我们处理这些类型。\par
+decltype(str)表达式总是表示\textit{str}的类型，即std::string\&\&。在表达式中任何需要该类型的地方都可以使用该类型。类型特征(类型函数如std::is\_same<>)会帮助我们处理这些类型。\par
 
 例如，要声明传递的形参类型不是引用的新对象，可以声明:\par
 
@@ -29,12 +29,12 @@ void rvFunc(std::string&& str)
 }
 \end{lstlisting}
 
-tmp在这个函数中是std::string类型(也可以显式地声明，如果我们使它成为T类型对象的泛型函数，代码仍然可以工作)。\par
+\textit{tmp}在这个函数中是std::string类型(也可以显式地声明，如果使它成为T类型对象的泛型函数，代码仍可以工作)。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{8.6.2 使用decltype检查值类型}
 
-到目前为止，我们只向decltype传递了名称来询问它的类型。但是，也可以将表达式(不仅仅是名称)传递给decltype。在这种情况下，decltype也会根据以下约定生成值类型:\par
+目前为止，只向decltype传递了名称来查询类型。但是，也可以将表达式(不仅仅是名称)传递给decltype，会根据以下约定生成值类型:\par
 
 \begin{itemize}
 	\item 对于prvalue，产生值类型:type
@@ -53,7 +53,7 @@ void rvFunc(std::string&& str)
 }
 \end{lstlisting}
 
-这意味着，如果只是传递一个放在圆括号内的名称(这是一个表达式，而不再只是一个名称)，decltype将生成它的类型。行为如下:\par
+这意味着，如果只是传递一个放在圆括号内的名称(这是一个表达式，而不再只是名称)，decltype将生成其类型。行为如下:\par
 
 \begin{lstlisting}[caption={}]
 void rvFunc(std::string&& str)
@@ -67,14 +67,14 @@ void rvFunc(std::string&& str)
 }
 \end{lstlisting}
 
-将此函数与不使用括号的前一个函数实现进行比较。这里，decltype of (str)的结果是std::string\&，因为str是lvalue的std::string类型。\par
+将此函数与不使用括号的前一个函数实现进行比较。这里，decltype(str)的结果是std::string\&，因为str是lvalue的std::string类型。\par
 
 对于decltype，当传递的名称周围加上圆括号时，会产生不同的结果，这在稍后讨论decltype(auto)时会很重要。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{检查值类型内部代码}
 
-一般来说，你现在可以在代码中检查特定的值类别，如下所示:\par
+现在可以在代码中检查特定的值类别，如下所示:\par
 
 \begin{itemize}
 	\item !std::is\_reference\_v<decltype((expr))>
@@ -87,7 +87,7 @@ void rvFunc(std::string&& str)
 	检查expr是否为rvalue。
 \end{itemize}
 
-请再次注意这里使用的括号，以确保即使只传递一个名称为expr，也使用decltype的值-类别检查形式。\par
+请再次注意这里使用的括号，以确保即使只传递名称\textit{expr}，也使用decltype的值-类别检查形式。\par
 
 C++20之前，必须使用::value来替代后缀\_v。\par
 
