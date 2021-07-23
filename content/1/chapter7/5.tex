@@ -1,7 +1,7 @@
 \begin{itemize}
-	\item 使用onexcept，则意味可以(有条件的)保证不抛出异常。
-	\item 如果实现了一个移动构造函数、移动赋值操作符或swap()，可以用一个(有条件的)noexcept表达式声明它。
-	\item 对于其他函数，如果从不抛出异常，可以用无条件的noexcept标记它们。
+	\item 使用noexcept，可以(有条件的)保证不抛出异常。
+	\item 如果实现了移动构造函数、移动赋值操作符或swap()，可以用(有条件的)noexcept表达式进行声明。
+	\item 对于其他函数，如果从不抛出异常，可以用无条件的noexcept标记。
 	\item 析构函数总是使用noexcept来声明(即使是在实现的时候)。
 \end{itemize}
 
