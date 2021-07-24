@@ -1,9 +1,9 @@
-再次注意，通用引用是将引用绑定到任何类型和值类别的任何对象，并且仍然保留其值类别和是否为const的信息的唯一方法。这也适用于用auto\&\&声明的通用引用。\par
+再次注意，通用引用是将引用绑定到任何类型和值类别的任何对象，并且仍然保留其值类别和是否为\textit{const}的唯一方法。这也适用于用auto\&\&声明的通用引用。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{11.3.1 通用引用和基于范围的for循环}
 
-在使用基于范围的for循环时，使用auto\&\&声明的非转发通用引用起着重要的作用。\par
+使用基于范围的for循环时，使用auto\&\&声明的非转发通用引用起着重要的作用。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{基于范围的循环规范}
@@ -34,12 +34,12 @@ for ( ; pos != end; ++pos ) {
 }
 \end{lstlisting}
 
-我们将range声明为一个通用引用，希望能够将其绑定到每个range，所以可以使用它两次(一次是开始，一次是结束)没有创建一个副本或丢失信息。\par
+将range声明为一个通用引用，希望能够将其绑定到每个range，所以可以使用它两次(一次是开始，一次是结束)没有创建副本或丢失信息。\par
 
-这个循环应该为:\par
+循环应该为:\par
 
 \begin{itemize}
-	\item 一个非const lvalue:
+	\item 非\textit{const} lvalue:
 	\begin{lstlisting}[caption={}]
 	std::vector<int> coll;
 	...
@@ -47,7 +47,7 @@ for ( ; pos != end; ++pos ) {
 		i *= 2;
 	}
 	\end{lstlisting}
-	\item 一个const lvalue:
+	\item \textit{const} lvalue:
 	\begin{lstlisting}[caption={}]
 	const std::vector<int> coll{0, 8, 15};
 	...
@@ -55,7 +55,7 @@ for ( ; pos != end; ++pos ) {
 		...
 	}
 	\end{lstlisting}
-	\item 一个prvalue:
+	\item prvalue:
 	\begin{lstlisting}[caption={}]
 	for (int i : std::vector<int>{0, 8, 15}) {
 		...
@@ -63,15 +63,15 @@ for ( ; pos != end; ++pos ) {
 	\end{lstlisting}
 \end{itemize}
 
-注意，对于所有这些情况，没有其他方法声明range:\par
+注意，对于这些情况，没有其他方法声明range:\par
 
 \begin{itemize}
-	\item 使用auto，将创建range的一个副本(这需要花费时间并禁用对元素的修改)。
-	\item 使用auto\&，可以用一个临时的prvalue禁用range的初始化。
+	\item 使用auto，将创建range的副本(这需要花费时间并禁用对元素的修改)。
+	\item 使用auto\&，可以用临时的prvalue禁用range的初始化。
 	\item 使用const auto\&，将失去所遍历range的非常量性。
 \end{itemize}
 
-请注意，现在指定的基于范围的for循环有一个重要的问题。代码如以下:\par
+请注意，现在指定的基于范围的for循环有一个问题。代码如以下:\par
 
 \begin{lstlisting}[caption={}]
 	std::vector<std::string> createStrings();
@@ -95,14 +95,14 @@ for ( ; pos != end; ++pos ) {
 	}
 \end{lstlisting}
 
-所有有效引用都延长了所绑定值的生命周期，这也适用于rvalue引用。但是，没有绑定到createString()的返回值(这样可以正常工作);而是绑定到一个引用，该引用指向由at()返回的createStrings()的返回类型。这意味着扩展了引用的生命周期，而不是createString()的返回值的生命周期。因此，该循环将遍历已经销毁的字符串。\par
+所有有效引用都延长了所绑定值的生命周期，这也适用于rvalue引用。但是，没有绑定到\textit{createString()}的返回值(这样可以正常工作);而是绑定到引用，该引用指向由\textit{at()}返回的\textit{createStrings()}的返回类型，扩展了引用的生命周期。因此，该循环将遍历已经销毁的字符串。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{使用基于范围的for循环}
 
-即使在调用基于范围的for循环时，通用引用也是有意义的。\par
+即使在调用基于范围的for循环时，通用引用也有意义。\par
 
-要在迭代时修改元素，必须使用非const引用。考虑函数模板，将一个传递值赋给传递集合中的所有元素:\par
+要在迭代时修改元素，必须使用非\textit{const}引用。考虑函数模板，将传递值赋给传递集合中的所有元素:\par
 
 \begin{lstlisting}[caption={}]
 template<typename Coll, typename T>
@@ -125,7 +125,7 @@ std::vector<std::string> coll2{"hello", "world"};
 assign(coll2, "ok"); // OK
 \end{lstlisting}
 
-然而，有一种情况是行不通的:\par
+然而，有种情况行不通:\par
 
 \begin{lstlisting}[caption={}]
 std::vector<bool> collB{false, true, false};
@@ -133,7 +133,7 @@ std::vector<bool> collB{false, true, false};
 assign(collB, true); // ERROR: cannot bind non-const lvalue reference to an rvalue
 \end{lstlisting}
 
-发生了什么事?让我们看一下基于范围的for循环展开的代码:\par
+发生了什么事?看一下基于范围的for循环展开的代码:\par
 
 \begin{lstlisting}[caption={}]
 std::vector<bool> coll{false, true, false};
@@ -149,7 +149,7 @@ std::vector<bool> coll{false, true, false};
 }
 \end{lstlisting}
 
-问题是std::vector<bool>中的元素不是bool类型的对象，而是单个比特位。实现的方法是:对于std::vector<bool>，元素引用的类型不是元素类型的引用。std::vector<bool>的实现是主模板std::vector<t>实现的偏特化，其中元素的引用是代理类的对象，可以像引用一样使用:\par
+问题是std::vector<bool>中的元素不是bool类型的对象，而是单个比特位。实现方法是:对于std::vector<bool>，元素引用的类型不是元素类型的引用。std::vector<bool>的实现是主模板std::vector<T>实现的偏特化，其中元素的引用是代理类的对象，可以像引用一样使用:\par
 
 \begin{lstlisting}[caption={}]
 namespace std {
@@ -165,15 +165,15 @@ namespace std {
 }
 \end{lstlisting}
 
-当对迭代器解引用时，返回类std::vector<bool>::reference的值。因此，在基于范围的for循环的扩展代码中的语句为\par
+当对迭代器解引用时，返回std::vector<bool>::reference的值。因此，在基于范围的for循环的扩展代码中的语句为\par
 
 \begin{lstlisting}[caption={}]
 auto& elem = *pos;
 \end{lstlisting}
 
-尝试将非const左值引用绑定到临时对象(prvalue)，这是不允许的。\par
+尝试将非\textit{const} lvalue引用绑定到临时对象(prvalue)，这是不允许的。\par
 
-然而，这个问题有一个解决方案:在调用基于范围的for循环时使用通用引用:\par
+然而，这个问题有一个解决方案:调用基于范围的for循环时使用通用引用:\par
 
 \begin{lstlisting}[caption={}]
 template<typename Coll, typename T>
@@ -192,7 +192,7 @@ std::vector<bool> collB{false, true, false};
 assign(collB, true); // OK (universal reference used to bind to an element)
 \end{lstlisting}
 
-因此，我们找到了使用非转发通用引用的另一个原因:绑定到没有作为引用实现的引用类型。或者说:允许绑定作为代理类型提供的非const对象来进行操作。\par
+因此，找到了使用非转发通用引用的另一个原因:绑定到没有作为引用实现的引用类型。或者说:允许绑定作为代理类型提供的非\textit{const}对象来进行操作。\par
 
 
 

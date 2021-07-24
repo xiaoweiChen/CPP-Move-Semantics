@@ -1,13 +1,13 @@
 \begin{itemize}
-	\item 不要使用const返回值(否则将禁用返回值的移动语义)。
-	\item 不要将返回的非const rvalue引用标记为const。
-	\item auto \&\&可用于声明不是参数的通用引用。就像任何通用引用一样，它可以引用任何类型和值类别的所有对象，其类型是
+	\item 不要使用\textit{const}返回值(否则将禁用返回值的移动语义)。
+	\item 不要将返回的非\textit{const} rvalue引用标记为\textit{const}。
+	\item auto\&\&可用于声明不是参数的通用引用。就像任何通用引用一样，它可以引用任何类型和值类别的所有对象，其类型是
 	\begin{itemize}
 		\item[-] 如果绑定到lvalue，则为lvalue引用(类型\&)
 		\item[-] 如果绑定到rvalue，则为rvalue引用(类型\&\&)
 	\end{itemize}
-	\item 使用std::forward<decltype(ref)>(ref)完美地转发一个用auto\&\&声明的通用引用ref。
-	\item 可以使用通用引用同时引用const和非const对象，并多次使用而不会丢失const信息。
+	\item 使用\textit{std::forward<decltype(ref)>(ref)}完美地转发用auto\&\&声明的通用引用ref。
+	\item 可以使用通用引用同时引用\textit{const}和非\textit{const}对象，并多次使用而不会丢失\textit{const}信息。
 	\item 可以使用通用引用来绑定到代理类型的引用。
 	\item 考虑在迭代集合元素以修改元素的泛型代码中使用auto\&\&。这样，代码就可以用于代理类型的引用。
 	\item 声明Lambda(或函数，因为C++20)的形参时使用auto\&\&是在函数模板中声明作为通用引用形参的方式。
