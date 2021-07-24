@@ -1,6 +1,6 @@
-我们已经讨论了将对象绑定到普通引用时的规则。现在，在引入通用引用之后，我们必须扩展这些规则。\par
+已经讨论了将对象绑定到普通引用时的规则。现在，在引入通用引用之后，必须扩展这些规则。\par
 
-我们再次假设有一个类X，有一个非const变量v，有一个const变量c:\par
+再次假设有一个类X，有一个非\textit{const}变量\textit{v}，有一个\textit{const}变量\textit{c}:\par
 
 \begin{lstlisting}[caption={}]
 class X {
@@ -11,7 +11,7 @@ X v;
 const X c{ ... };
 \end{lstlisting}
 
-如果提供函数f()的所有重载，根据正式规则，就是下面列出所有重载:\par
+如果提供函数\textit{f()}的所有重载，根据正式规则，就是下面列出所有重载:\par
 
 \begin{lstlisting}[caption={}]
 void f(const X&); // read-only access
@@ -28,9 +28,9 @@ void f(T&&); // to use perfect forwarding
 	\includegraphics[width=1.0\textwidth]{content/2/chapter9/images/1}
 \end{center}
 
-同样，这些数字列出了重载解析的优先级(最小的数字具有最高的优先级)，以便可以看到在提供多个重载时调用了哪个函数。\par
+同样，这些数字列出了重载解析的优先级(最小的数字具有最高的优先级)，以便确定重载时调用了哪个函数。\par
 
-请注意，通用引用总是次优选择。完美匹配总是优先，但是需要转换类型(例如使其为const或将rvalue转换为lvalue)是比为精确类型实例化函数模板更糟糕的匹配方式。\par
+请注意，通用引用总是次优选择。完美匹配总是优先，但是需要转换类型(例如使其为\textit{const}或将rvalue转换为lvalue)是比为精确类型实例化函数模板更糟糕的匹配方式。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{9.4.1 用通用引用修正重载解析}
@@ -38,13 +38,13 @@ void f(T&&); // to use perfect forwarding
 重载解析中，通用引用绑定比类型转换更好，这有一个非常糟糕的副作用:如果有一个接受单个通用引用的构造函数，那么这个匹配就要比以下方式更优\par
 
 \begin{itemize}
-	\item 如果传递非const对象，则使用复制构造函数
-	\item 如果传递const对象，则使用移动构造函数
+	\item 如果传递非\textit{const}对象，则使用复制构造函数
+	\item 如果传递\textit{const}对象，则使用移动构造函数
 \end{itemize}
 
-因此，在实现只有一个通用引用参数的构造函数时必须谨慎。\par
+因此，实现只有一个通用引用参数的构造函数时，必须谨慎。\par
 
-思考下面的程序:\par
+思考下面的代码:\par
 
 {\color{red}{generic/universalconstructor.cpp}}\par
 
@@ -87,9 +87,9 @@ move constructor \\
 universal constructor
 \end{tcolorbox}
 
-因此，最好避免实现将第一个形参声明为通用引用，并可为任意类型的实参调用的泛型构造函数。\par
+因此，最好避免实现将第一个形参声明为通用引用，并为任意类型的实参调用的泛型构造函数。\par
 
-另一种选择是，如果传递的是类的类型(或可转换为)，则以禁用构造函数的方式约束构造函数。其必须使用在复制或移动构造函数上才有效果。从C++20起，可以写成这样:\par
+另一种选择是，传递的是类的类型(或可转换为)，则以禁用构造函数的方式约束构造函数。其必须使用在复制或移动构造函数上才有效果。从C++20起，可以写成这样:\par
 
 \begin{lstlisting}[caption={}]
 class X {
@@ -103,7 +103,7 @@ class X {
 };
 \end{lstlisting}
 
-在C++20前，需要这样写:\par
+C++20前，需要这样写:\par
 
 \begin{lstlisting}[caption={}]
 class X {

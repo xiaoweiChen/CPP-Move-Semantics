@@ -1,4 +1,4 @@
-不幸的是，通用/转发引用使用与普通rvalue引用相同的语法(形式上，是特殊的rvalue引用)。这是混乱的来源，如果看到有两个\&符号的声明，必须再次检查使用的是真实类型名，还是函数模板形参名。\par
+不幸的是，通用/转发引用使用与普通rvalue引用相同的语法(形式上，是特殊的rvalue引用)。这是混乱的根源，如果看到有两个\&符号的声明，必须再次检查使用的是真实类型名，还是函数模板形参名。\par
 
 换句话说，两者之间有很大的区别\par
 
@@ -18,7 +18,7 @@ void foo(Coll&& arg) // arg is a universal/forwarding reference of any type
 \hspace*{\fill} \par %插入空行
 \textbf{9.3.1 实际类型的rvalue引用}
 
-普通的rvalue引用就不是使用函数的模板形参名(或者该引用是用const或volatile声明的)，所以只能将这些引用绑定到rvalue。此外，传递的实参还不是const:\par
+普通的rvalue引用就不是使用函数的模板形参名(或者该引用是用\textit{const}或\textit{volatile}声明的)，所以只能将这些引用绑定到rvalue。此外，传递的实参还不是\textit{const}:\par
 
 \begin{lstlisting}[caption={}]
 using Coll = std::vector<std::string>;
@@ -40,17 +40,17 @@ foo(std::move(v)); // OK, arg binds to a non-const xvalue
 foo(std::move(c)); // ERROR: can’t bind non-const rvalue reference to const xvalue
 \end{lstlisting}
 
-foo()中:\par
+\textit{foo()}中:\par
 
 \begin{itemize}
-	\item arg的类型Coll绝不是const。
-	\item 使用std::forward<>()没有意义。只有不再需要该值，并想将其转发给另一个函数时，使用std::move()才有意义(这里可以使用std::forward<>()，因为当使用rvalue引用时，它等同于std::move())。
+	\item \textit{arg}的类型\textit{Coll}绝不是\textit{const}。
+	\item 使用\textit{std::forward<>()}没有意义。只有不再需要该值，并想将其转发给另一个函数时，使用\textit{std::move()}才有意义(这里可以使用\textit{std::forward<>()}，因为当使用rvalue引用时，它等同于\textit{std::move()})。
 \end{itemize}
 
 \hspace*{\fill} \par %插入空行
 \textbf{9.3.2 函数模板形参的rvalue引用}
 
-如果函数模板形参有一个非const/volatile的rvalue引用，则可以传递所有值类别的对象。传递的实参可以是const，也可以不是:\par
+如果函数模板形参有非\textit{const}/\textit{volatile}的rvalue引用，则可以传递所有值类别的对象。传递的实参可以是\textit{const}，也可以不是:\par
 
 \begin{lstlisting}[caption={}]
 template<typename Coll>
@@ -71,11 +71,11 @@ foo(std::move(v)); // OK, arg binds to a non-const xvalue
 foo(std::move(c)); // OK, arg binds to a const xvalue
 \end{lstlisting}
 
-foo()中:\par
+\textit{foo()}中:\par
 
 \begin{itemize}
-	\item arg的类型现在可以是const，也可以不是。
-	\item 这种情况下，使用std::move()没有意义。只有不再需要该值，并想要将其转发给另一个函数时，才有必要使用std::forward<>()(也可以使用std::move()，但会将所有参数传递给带有移动语义的foo()，将非const lvalue v作为xvalue传递)。
+	\item \textit{arg}的类型现在可以是\textit{const}，也可以不是。
+	\item 这种情况下，使用\textit{std::move()}没有意义。只有不再需要该值，并想要将其转发给另一个函数时，才有必要使用\textit{std::forward<>()}(也可以使用\textit{std::move()}，但会将所有参数传递给带有移动语义的\textit{foo()}，将非\textit{const} lvalue \textit{v}作为xvalue传递)。
 \end{itemize}
 
 

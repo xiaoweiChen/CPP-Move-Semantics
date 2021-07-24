@@ -1,12 +1,12 @@
 为了避免重载具有不同值类型的参数的函数，C++引入了一种机制来实现完美转发。需要三样东西:\par
 
 \begin{enumerate}
-	\item 将调用形参作为纯rvalue引用(使用\&\&声明，但不使用const或volatile)。
-	\item 形参的类型必须是函数的模板形参。
-	\item 将形参转发给另一个函数时，可以使用std::forward<>()的辅助函数，该函数在<utility>头文件中声明。
+	\item 将调用形参作为纯rvalue引用(使用\&\&声明，但不使用\textit{const}或\textit{volatile})。
+	\item 形参的类型必须是函数模板的形参。
+	\item 将形参转发给另一个函数时，可以使用\textit{std::forward<>()}的辅助函数，该函数在<utility>头文件中声明。
 \end{enumerate}
 
-一个函数的完美转发参数，如下所示:\par
+函数的完美转发参数，如下所示:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -15,14 +15,14 @@ void callFoo(T&& arg) {
 }
 \end{lstlisting}
 
-std::forward<>()实际上是一个条件性std::move()，这样我们就得到了与上面callFoo()的三个(或四个)重载等价的行为:
+\textit{std::forward<>()}实际上是一个条件性\textit{std::move()}，这样就得到了与上面\textit{callFoo()}的三个(或四个)重载等价的行为:
 
 \begin{itemize}
-	\item 如果传递一个rvalue给arg，就会产生与调用foo(std::move(arg)相同的效果。
-	\item 如果我们传递一个lvalue给arg，就会产生与调用foo(arg)相同的效果。
+	\item 如果传递rvalue给\textit{arg}，就会产生与调用\textit{foo(std::move(arg))}相同的效果。
+	\item 如果我们传递一个lvalue给\textit{arg}，就会产生与调用\textit{foo(arg)}相同的效果。
 \end{itemize}
 
-同样，我们可以完美传递两个参数:\par
+同样，可以完美传递两个参数:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T1, typename T2>
@@ -31,7 +31,7 @@ void callFoo(T1&& arg1, T2&& arg2) {
 }
 \end{lstlisting}
 
-也可以将std::forward<>()应用于可变数目形参的每个实参，完美地将它们全部进行转发:\par
+也可以\textit{将std::forward<>()}应用于可变参的实参，完美地将进行转发:\par
 
 \begin{lstlisting}[caption={}]
 template<typename... Ts>
@@ -40,21 +40,21 @@ void callFoo(Ts&&... args) {
 }
 \end{lstlisting}
 
-注意，我们不会对所有参数一次性使用forward<>()，而是会分别为每个参数使用。因此，必须将省略号("…")放在forward()表达式的末尾，而不是直接放在args后面。\par
+注意，不会对所有参数一次性使用forward<>()，而是会分别为每个参数使用。因此，必须将省略号("…")放在\textit{forward()}表达式的末尾，而不是直接放在\textit{args}的后面。\par
 
-然而，这里到底发生了什么，需要仔细的解释。\par
+然而，这里到底发生了什么，需要详细的解释。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{9.2.1 通用(或转发)引用}
 
-首先，将arg声明为一个rvalue引用形参:\par
+首先，将\textit{arg}声明为rvalue引用形参:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
 void callFoo(T&& arg); // arg is universal/forwarding reference
 \end{lstlisting}
 
-这可能会给人一种应该适用rvalue引用的一般规则。然而，事实并非如此。函数模板形参的rvalue引用(未限定为const或volatile)，不遵循普通rvalue引用的规则。所以，不是一回事\par
+这可能会给人一种应该适用rvalue引用的一般规则的感觉。然而，事实并非如此。函数模板形参的rvalue引用(未限定为\textit{const}或\textit{volatile})，不遵循普通rvalue引用的规则。所以，不是一回事\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{两个术语:通用引用和转发引用}
@@ -64,14 +64,14 @@ void callFoo(T&& arg); // arg is universal/forwarding reference
 这两个术语都描述了通用引用/转发引用的基本面:\par
 
 \begin{itemize}
-	\item 可以统一绑定到所有类型的对象(const和非const)和值类别。
+	\item 可以统一绑定到所有类型的对象(\textit{const}和非\textit{const})和值类别。
 	\item 通常用来转发参数，但这并不是唯一的用法(这也是我更喜欢“通用引用”的原因之一)。
 \end{itemize}
 
 \hspace*{\fill} \par %插入空行
 \textbf{通用引用绑定到所有值类别}
 
-通用引用的重要特性是可以绑定到任何值类别的对象和表达式:\par
+通用引用的重要特性是，可以绑定到任何值类别的对象和表达式:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -101,14 +101,14 @@ callFoo(std::move(v)); // OK, arg is X&&
 callFoo(std::move(c)); // OK, arg is const X&&
 \end{lstlisting}
 
-按照规则，类型T\&\&是arg的类型\par
+按照规则，类型T\&\&是\textit{arg}的类型\par
 
 \begin{itemize}
 	\item 如果引用lvalue，则为lvalue引用
 	\item 如果引用rvalue，则为rvalue引用
 \end{itemize}
 
-注意，用const(或volatile)限定的泛型rvalue引用不是通用引用。只能传递rvalue:\par
+注意，用\textit{const}(或\textit{volatile})限定的泛型rvalue引用不是通用引用。只能传递rvalue:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -119,14 +119,14 @@ callFoo(c); // ERROR: c is not an rvalue
 callFoo(std::move(c)); // OK, arg is const X&&
 \end{lstlisting}
 
-注意，还没有谈到T的类型。稍后将解释什么样的类型可以导出为通用引用的T。\par
+这里，还没有谈到T的类型。稍后将解释什么样的类型可以导出为通用引用的T。\par
 
-稍后，我们将讨论使用Lambda的相应示例。\par
+稍后，将讨论使用Lambda的相应示例。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{9.2.2 std::forward<>()}
+\textbf{9.2.2 \textit{std::forward<>()}}
 
-在callFoo()内部，我们使用如下所示的通用引用:\par
+\textit{callFoo()}内部，使用如下所示的通用引用:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -135,25 +135,25 @@ void callFoo(T&& arg) {
 }
 \end{lstlisting}
 
-和std::move()一样，std::forward<>()也定义在头文件<utility>中。\par
+和\textit{std::move()}一样，\textit{std::forward<>()}也定义在头文件<utility>中。\par
 
-表达式std::forward<t>(arg)其实是这样实现的:\par
+\textit{std::forward<t>(arg)}其实是这样实现的:\par
 
 \begin{itemize}
-	\item 如果传递给函数的是T类型的rvalue，则表达式等价于std::move(arg)。
+	\item 如果传递给函数的是T类型的rvalue，则表达式等价于\textit{std::move(arg)}。
 	\item 如果传递给函数的是T类型的lvalue，则表达式等价于arg。
 \end{itemize}
 
-也就是说，std::forward<>()是std::move()，仅用于传递rvalue。\par
+也就是说，\textit{std::forward<>()}是\textit{std::move()}，仅用于传递rvalue。\par
 
-就像std::move()一样，std::forward<>()的语义是在这里不再需要这个值，另外保留了要传递的通用引用绑定的对象类型(包括常量)和值类别。你可以争辩说，需要达成条件才不再需要这个值，但是因为不知道std::forward<>()是否变成了std::move()，所以假设对象之后有值就是错误的。因此，在使用std::forward<>()之后，对象通常是有效的，但可能不知道它的值。\par
+就像\textit{std::move()}一样，\textit{std::forward<>()}的语义是在这里不再需要这个值，另外保留了要传递的通用引用绑定的对象类型(包括常量)和值类别。你可以争辩说，需要达成条件才不再需要这个值，但是因为不知道\textit{std::forward<>()}是否变成了\textit{std::move()}，所以假设对象之后有值就是错误的。因此，使用\textit{std::forward<>()}之后，对象通常有效，但可能不知道具体值。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{std::forward<>()用于成员函数}
+\textbf{\textit{std::forward<>()}用于成员函数}
 
-注意，可以在调用成员函数时使用std::forward<>()作为通用引用。记住，成员函数可能使用引用限定符对移动语义有特定的重载。这种情况下，如果不再需要该对象的值，可以使用std::forward<>()来调用成员函数。\par
+注意，可以在调用成员函数时使用\textit{std::forward<>()}作为通用引用。记住，成员函数可能使用引用限定符对移动语义有特定的重载。如果不再需要该对象的值，可以使用\textit{std::forward<>()}来调用成员函数。\par
 
-例如，假设我们重载了getter来提高返回临时人员名称的性能:\par
+例如，假设重载了getter来提高返回临时人员名称的性能:\par
 
 \begin{lstlisting}[caption={}]
 class Person
@@ -175,7 +175,7 @@ public:
 };
 \end{lstlisting}
 
-采用通用引用的函数中，可以使用std::forward<>()，如下所示:\par
+采用通用引用的函数中，可以使用\textit{std::forward<>()}，如下所示:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -188,12 +188,12 @@ void foo(T&& x)
 }
 \end{lstlisting}
 
-使用std::forward<>()之后，x处于有效但未指定的状态。无论何时使用std::forward<>()，请确保不再使用该对象(的值)。\par
+使用\textit{std::forward<>()}之后，\textit{x}处于有效但未指定的状态。无论何时使用\textit{std::forward<>()}，请确保不再使用该对象。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{9.2.3 完美转发的效果}
 
-结合声明通用引用的行为和std::forward<>()的使用，我们得到了以下行为:\par
+结合声明通用引用的行为和\textit{std::forward<>()}的使用，得到了以下行为:\par
 
 \begin{lstlisting}[caption={}]
 void foo(const X&); // for constant values (read-only access)
@@ -215,14 +215,14 @@ callFoo(std::move(v)); // OK, expands to foo(std::move(arg)), so it calls foo(X&
 callFoo(std::move(c)); // OK, expands to foo(std::move(arg)), so it calls foo(const X&)
 \end{lstlisting}
 
-我们传递给callFoo()的任何参数都会变成lvalue(因为参数arg是一个有名称的对象)。然而，arg的类型取决于我们传递的内容:\par
+传递给callFoo()的任何参数都会变成lvalue(因为参数\textit{arg}是有名称的对象)。然而，\textit{arg}的类型取决于传递的内容:\par
 
 \begin{itemize}
-	\item 如果传递一个lvalue，arg就是一个lvalue引用(传递非const X时是X\&，传递const X时是X\&)。
-	\item 如果传递rvalue(未命名的临时对象或用std::move()标记的对象)，则arg是rvalue引用(X\&\&或const X\&\&)。
+	\item 如果传递lvalue，\textit{arg}就是一个lvalue引用(传递非\textit{const} X时是X\&，传递\textit{const} X时是X\&)。
+	\item 如果传递rvalue(未命名的临时对象或用\textit{std::move()}标记的对象)，则\textit{arg}是rvalue引用(X\&\&或const X\&\&)。
 \end{itemize}
 
-当有rvalue引用时(即，arg绑定到右值)，通过std::forward<>()，就可以用std::move()转发形参。\par
+当有rvalue引用时(即，\textit{arg}绑定到右值)，通过\textit{std::forward<>()}，就可以用\textit{std::move()}转发形参。\par
 
 
 
