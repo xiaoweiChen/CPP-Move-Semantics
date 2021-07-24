@@ -1,9 +1,9 @@
 \begin{itemize}
-	\item 您可以使用通用引用来绑定到所有const和非const对象，而不会丢失该对象的const性信息。
-	\item 即使不使用std::forward<>()，也可以使用通用引用来实现对传递的参数的特殊处理。
-	\item 要拥有特定类型的通用引用，需要使用concepts/requirements(自C++20起)或一些模板技巧(到C++17为止)。
+	\item 可以使用通用引用来绑定到所有\textit{const}和非\textit{const}对象，而不会丢失该对象的\textit{const}信息。
+	\item 即使不使用\textit{std::forward<>()}，也可以使用通用引用来实现对传递的参数的特殊处理。
+	\item 要拥有特定类型的通用引用，需要使用\textit{concepts/requirements}(自C++20起)或一些模板技巧(到C++17为止)。
 	\item 只有函数模板形参的rvalue引用是通用引用。类模板形参的rvalue引用、模板形参的成员以及全特化都是普通的rvalue引用，只能绑定到rvalue。
-	\item 当显式指定通用引用的类型时，它们不再作为通用引用。而是使用类型\&来传递lvalue。
+	\item 当显式指定通用引用的类型时，不再作为通用引用。而是使用类型\&来传递lvalue。
 	\item C++标准委员会将转发引用作为通用引用的“更好”术语。不幸的是，术语转发引用限制了通用引用对特定用例的用途，并造成了对同一事物使用两个术语的不必要混淆。因此，使用通用引用/转发引用可以避免更多的混淆。
 \end{itemize}
 

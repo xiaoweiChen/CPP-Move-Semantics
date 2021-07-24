@@ -28,12 +28,12 @@ f(std::move(v)); // T is deduced as MyType, so arg is declared as MyType&&
 这意味着在这种情况下:\par
 
 \begin{itemize}
-	\item 如果形参的类型是用\&\&声明的，而不是用const或volatile声明的
+	\item 如果形参的类型是用\&\&声明的，而不是用\textit{const}或\textit{volatile}声明的
 	\item 并且传递的是一个lavlue
 	\item 那么将T推导为T\&。
 \end{itemize}
 
-我们的例子:\par
+例子:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -46,7 +46,7 @@ f(v); // T is deduced as MyType&
 f(c); // T is deduced as const MyType&
 \end{lstlisting}
 
-但我们已经将arg声明为T\&\&。如果T是T\&，那这里C++的引用折叠规则(参见[dcl.]一节。参考]的C++标准)给出了一个答案:\par
+但已经将\textit{arg}声明为T\&\&。如果T是T\&，那这里C++的引用折叠规则(参见[dcl.]一节。参考]的C++标准)给出了一个答案:\par
 
 \begin{itemize}
 	\item Type\& \& 成为 Type\&
@@ -65,26 +65,26 @@ f(v); // T is deduced as MyType& and arg has this type
 f(c); // T is deduced as const MyType& and arg has this type
 \end{lstlisting}
 
-现在考虑一下std::forward<>()是如何定义的，与std::move()相反:\par
+现在考虑一下\textit{std::forward<>()}是如何定义的，与\textit{std::move()}相反:\par
 
 \begin{itemize}
-	\item std::move()总是将类型转换为rvalue引用:
+	\item \textit{std::move()}总是将类型转换为rvalue引用:
 	\begin{lstlisting}[caption={}]
 	static_cast<remove_reference_t<T>&&>(t)
 	\end{lstlisting}
 	它删除引用并转换为相应的rvalue引用类型(删除任何\&并添加\&\&)。
-	\item std::forward<>()只向传递的类型参数添加rvalue引用:
+	\item \textit{std::forward<>()}只向传递的类型参数添加rvalue引用:
 	\begin{lstlisting}[caption={}]
 	static_cast<T&&>(t)
 	\end{lstlisting}
 	引用折叠规则再次适用:
 	\begin{itemize}
-		\item[-] 如果类型T是一个lvalue引用，T\&\&仍然是一个lvalue引用(\&\&无效)。因此，我们将arg强制转换为lvalue引用，这意味着arg没有移动语义。
-		\item[-] 但是，如果T是一个rvalue引用(或者根本不是一个引用)，T\&\&(仍然)是一个rvalue引用。因此，将arg强制转换为rvalue引用，这样就将值类别更改为xvalue，这是std::move()的效果。
+		\item[-] 如果类型T是lvalue引用，T\&\&仍然是lvalue引用(\&\&无效)。因此，将\textit{arg}强制转换为lvalue引用，这意味着\textit{arg}没有移动语义。
+		\item[-] 但是，如果T是rvalue引用(或者根本不是引用)，T\&\&(仍然)是rvalue引用。因此，将\textit{arg}强制转换为rvalue引用，这样就将值类别更改为xvalue，这是\textit{std::move()}的效果。
 	\end{itemize}
 \end{itemize}
 
-因此，我们得到:\par
+因此:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -102,7 +102,7 @@ f(MyType{}); // T is MyType, arg is MyType&&, forward() is equivalent to move()
 f(std::move(v)); // T is MyType, arg is MyType&&, forward() is equivalent to move()
 \end{lstlisting}
 
-注意，字符串字面值是rvalue，因此我们可以推导出的T和arg:\par
+注意，字符串字面值是rvalue，因此我们可以推导出的T和\textit{arg}:\par
 
 \begin{lstlisting}[caption={}]
 f("hi"); // lvalue passed, so T and arg have type const char(&)[3]
@@ -110,7 +110,7 @@ f(std::move("hi")); // xvalue passed, so T is deduced as const char[3]
 // and arg has type const char(&&)[3]
 \end{lstlisting}
 
-还请记住，对函数的引用总是lvalue，因此，如果将对函数的引用传递给通用引用，那么T总是推断为lvalue引用:\par
+还请记住，对函数的引用总是lvalue，因此，如果对函数的引用传递给通用引用，那么T总是推断为lvalue引用:\par
 
 \begin{lstlisting}[caption={}]
 void func(int) {
@@ -122,7 +122,7 @@ f(std::move(func)); // lvalue passed to f(), so T and arg have type void(&)(int)
 \hspace*{\fill} \par %插入空行
 \textbf{10.3.1 通用引用类型的说明}
 
-声明通用/转发引用时，还可以显式指定模板形参的类型，而不是推导。但是，请记住参数声明为T\&\&。因此，可以有以下行为:\par
+声明通用/转发引用时，还可以显式指定模板形参的类型，而不是推导。但是，请记住参数声明为T\&\&。因此，有以下行为:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -139,7 +139,7 @@ f<std::string&&>( ... ); // arg is a raw rvalue reference binding to rvalues onl
 
 因此，有了明确的规范，通用引用不再作为通用引用。作为调用者，可以指定获得的引用的具体类型。\par
 
-因此，要传递一个lvalue(这里仍然需要值)，请确保将模板参数指定为lvalue引用。否则，代码将无法编译:\par
+因此，要传递lvalue(这里仍然需要值)，请确保将模板参数指定为lvalue引用。否则，代码将无法编译:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -171,7 +171,7 @@ void f(auto&& arg) {
 
 推导通用引用模板参数的特殊规则(当传递lvalue时，将类型作为lvalue引用进行推导)可能会导致看似正确的代码出现意外错误。\par
 
-以下代码无法编译时，程序员通常会感到惊讶:\par
+以下代码无法编译时，开发者通常会感到惊讶:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T>
@@ -189,8 +189,8 @@ insert(coll, s); // ERROR: no matching function call
 问题是两个参数都可以推导出参数T，但推导出的类型不一样:\par
 
 \begin{itemize}
-	\item 使用参数coll, T将其推导为std::string。
-	\item 但是，根据通用引用的特殊规则，参数elem会强制将T推导为std::string\&。
+	\item 使用参数\textit{coll}, T将其推导为std::string。
+	\item 但是，根据通用引用的特殊规则，参数\textit{elem}会强制将T推导为std::string\&。
 \end{itemize}
 
 因此，编译器会产生歧义错误。\par

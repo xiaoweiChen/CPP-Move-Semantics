@@ -1,4 +1,4 @@
-我们对普通rvalue引用和通用/转发引用使用相同的语法，这为对象是普通rvalue引用还是通用引用带来了一些有趣的情况。\par
+对普通rvalue引用和通用/转发引用使用相同的语法，这为对象是普通rvalue引用还是通用引用带来了一些有趣的情况。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{10.2.1 泛型类型成员的rvalue引用}
@@ -56,7 +56,7 @@ class C {
 };
 \end{lstlisting}
 
-这里有一个完整的例子:\par
+完整的例子:\par
 
 {\color{red}{generic/universalclass.cpp}}\par
 
@@ -90,7 +90,7 @@ int main()
 }
 \end{lstlisting}
 
-通常，类模板中的函数不遵循函数模板规则。就是temploid，泛型代码，在实例化类时遵循普通函数的规则。\par
+通常，类模板中的函数不遵循函数模板规则。就是\textit{temploid}，泛型代码在实例化类时遵循普通函数的规则。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{10.2.3 完全特化中参数的rvalue引用}
@@ -114,7 +114,7 @@ template<> // full specialization (for lvalues)
 void foo(std::string& arg);
 \end{lstlisting}
 
-这是一个完整的例子:\par
+完整的例子:\par
 
 {\color{red}{generic/universalspec.cpp}}\par
 
