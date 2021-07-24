@@ -3,7 +3,7 @@
 \hspace*{\fill} \par %插入空行
 \textbf{13.1.1 声明只移动类型}
 
-只移动类型禁用了复制。通常，复制构造函数和复制赋值操作符会删除，而移动构造函数和移动赋值操作符会默认或实现:\par
+只移动类型禁用了复制。通常，复制构造函数和复制赋值操作符会删除，而移动构造函数和移动赋值操作符会默认实现:\par
 
 例如:\par
 
@@ -22,7 +22,7 @@ public:
 };
 \end{lstlisting}
 
-按照规则，声明移动特殊成员函数就足够了(因为声明特殊移动成员将复制成员标记为已删除)。但是，显式地将复制特殊成员函数标记为=delete会使意图更加明确。\par
+按照规则，声明移动特殊成员函数就足够了(因为声明特殊移动成员将复制成员标记为已删除)。但是，显式地将复制特殊成员函数标记为\textit{=delete}会使意图更加明确。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{13.1.2 使用只移动类型}
@@ -39,15 +39,15 @@ coll.push_back(mo); // ERROR: can’t copy mo into coll
 coll.push_back(std::move(mo)); // OK, moves mo into coll
 \end{lstlisting}
 
-要将只移动元素的值移出容器，需要使用std::move()作为元素的引用。例如:\par
+要将只移动元素的值移出容器，需要使用\textit{std::move()}作为元素的引用。例如:\par
 
 \begin{lstlisting}[caption={}]
 mo = std::move(coll[0]); // move assign first element (still there with moved-from state)
 \end{lstlisting}
 
-但请记住，在这个调用之后，元素仍然在容器中，状态为已移动。\par
+但请记住，调用之后元素仍然在容器中，状态为已移动。\par
 
-在循环中，移除所有元素也是可能的:\par
+循环中，也可以移除所有元素:\par
 
 \begin{lstlisting}[caption={}]
 for (auto& elem : coll) { // note: non-const reference
@@ -57,14 +57,14 @@ for (auto& elem : coll) { // note: non-const reference
 
 同样的，元素仍然在容器中，状态为已移动。\par
 
-对于只移动类型，有两个操作是不可能的:\par
+对于只移动类型，有两个不可能操作:\par
 
 \begin{itemize}
-	\item 不能使用std::initializer\_lists，因为它们通常是按值传递的，这需要复制元素:
+	\item 不能使用std::initializer\_lists，因为其是按值传递的，这需要复制元素:
 	\begin{lstlisting}[caption={}]
 	std::vector<MoveOnly> coll{ MoveOnly{}, ... }; // ERROR
 	\end{lstlisting}
-	\item 只能通过引用迭代一个容器中所有只允许移动的元素:
+	\item 通过引用迭代，可以访问容器中所有只允许移动的元素:
 	\begin{lstlisting}[caption={}]
 	std::vector<MoveOnly> coll;
 	...
@@ -78,7 +78,7 @@ for (auto& elem : coll) { // note: non-const reference
 	\end{lstlisting}
 \end{itemize}
 
-请参阅lib/moveonly.cpp来获得一个完整的程序，其中包含本节中的所有示例语句。\par
+请参阅lib/moveonly.cpp，其中包含本节中的所有示例语句。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{13.1.3 将只移动对象作为参数传递}
@@ -94,9 +94,9 @@ sink(mo); // ERROR: can’t copy mo to arg
 sink(std::move(mo)); // OK, moves mo to arg because passed by value
 \end{lstlisting}
 
-从语义上讲，在这里将相关资源的所有权传递给函数。但请注意，只有当参数按值接受时才会出现这种情况。\par
+从语义上讲，这里将相关资源的所有权传递给函数。但请注意，只有当参数按值接受时才会出现这种情况。\par
 
-sink()函数也可以通过(rvalue或通用)引用声明为只接受移动对象。这种情况下，仍然需要通过std::move()传递lvalue。但是，不知道传递的资源的所有权是否由sink()获取。\par
+\textit{sink()}函数也可以通过(rvalue或通用)引用声明为只接受移动对象，仍然需要通过\textit{std::move()}传递lvalue。但是，不知道传递的资源的所有权是否由\textit{sink()}获取。\par
 
 \begin{lstlisting}[caption={}]
 void sink(MoveOnly&& arg); // sink() might take ownership of the passed argument
@@ -106,9 +106,9 @@ sink(mo); // ERROR: can’t pass lvalue mo to arg
 sink(std::move(mo)); // OK, might move mo to something inside sink()
 \end{lstlisting}
 
-Scott Meyers和Herb Sutter (C++社区的两位主要作者)讨论了应该如何声明只移动类型的接收器函数。Herb的立场是通过值来取参数，Scott的立场是通过rvalue引用来取参数。\par
+Scott Meyers和Herb Sutter(C++社区的两位主要作者)讨论了应该如何声明只移动类型的接收器函数。Herb的立场是通过值来取参数，Scott的立场是通过rvalue引用来取参数。\par
 
-据我所知，他们后来一致认为最好采用rvalue引用的方法。然而，真正的答案不重要。std::move()的通常规则也应该适用于这里:如果用std::move()传递一个只移动的对象，可能会丢失它的值，也可能不会。如果放弃所有权很重要(希望确保文件已关闭、线程已停止或相关的资源已释放)，请在调用后使用相应语句直接明确。例如:\par
+据我所知，他们后来一致认为最好采用rvalue引用的方法。然而，真正的答案不重要。\textit{std::move()}的规则也应该适用于这里:如果用\textit{std::move()}传递只移动的对象，可能会丢失值，也可能不会。如果放弃所有权很重要(希望确保文件已关闭、线程已停止或相关的资源已释放)，请在调用后使用相应语句直接明示。例如:\par
 
 \begin{lstlisting}[caption={}]
 MoveOnly mo;
@@ -118,7 +118,7 @@ foo(std::move(mo)); // might move ownership
 mo.close(); // or mo.reset() or mo.release() or so
 \end{lstlisting}
 
-只移动对象通常有这样的函数，但名称不同(例如，在C++标准库中，称为流的close()，线程的join()，或唯一指针的reset())。这些函数通常将对象带入默认构造状态。\par
+只移动对象通常有这样的函数，但名称不同(例如，在C++标准库中，称为流的\textit{close()}，线程的\textit{join()}，或unique指针的\textit{reset()})。这些函数通常将对象带入默认构造状态。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{13.1.4 按值返回只移动的对象}
@@ -138,12 +138,12 @@ MoveOnly source()
 MoveOnly m{source()}; // takes ownership of the associated value/resource
 \end{lstlisting}
 
-当有非本地数据时，才可能需要在return语句中使用std::move()(例如，在成员函数中移出成员的值)。\par
+有非本地数据时，才可能需要在return语句中使用\textit{std::move()}(例如，成员函数中移出成员的值)。\par
 
 \hspace*{\fill} \par %插入空行
-\textbf{13.1.5 只移动对象的移动状态}
+\textbf{13.1.5 只移动对象的状态}
 
-只移动对象的已移动状态通常不再拥有自己的资源。这是一个已定义的状态，该类型的用户应该能够对其进行双重检查。有时，移动操作只是交换内部数据，以便移动赋值将另一个资源分配给已移动对象(例如，流类这样做)。\par
+只移动对象处于已移动状态时，通常不再拥有自己的资源。这是一个已定义的状态，该类型的用户应该能够对其进行双重检查。有时，移动操作只是交换内部数据，以便移动赋值将另一个资源分配给已移动对象(例如，流类这样做)。\par
 
 C++标准库使用不同的方式和名称来检查不再拥有资源的“已移动”状态。例如，正校验(是否仍拥有资源?)可能如下所示:\par
 
