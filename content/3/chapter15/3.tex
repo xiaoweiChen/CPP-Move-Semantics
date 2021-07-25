@@ -5,7 +5,7 @@ C++标准库提供了两种词汇表类型，用于使用值语义处理一个�
 \hspace*{\fill} \par %插入空行
 \textbf{15.3.1 pair的移动语义}
 
-std::pair<>是一个很好的例子，它展示了移动语义的好处和复杂性。原则上，我们只有一个具有两个成员的通用数据结构(在命名空间std中定义):\par
+std::pair<>是很好的例子，展示了移动语义的好处和复杂性。原则上，只有一个具有两个成员的通用数据结构(在命名空间std中定义):\par
 
 \begin{lstlisting}[caption={}]
 template<typename T1, typename T2>
@@ -16,7 +16,7 @@ struct pair {
 };
 \end{lstlisting}
 
-然而，为了支持移动语义(以及其他一些棘手的案例，如引用成员)，我们有以下声明(这里，使用了C++14版本，做了一些利于可读性的工作):\par
+为了支持移动语义(以及其他一些棘手的案例，如引用成员)，有以下声明(这里，使用了C++14版本，并做了一些利于可读性的工作):\par
 
 \begin{lstlisting}[caption={}]
 template<typename T1, typename T2>
@@ -51,7 +51,7 @@ struct pair {
 };
 \end{lstlisting}
 
-如您所见，该类支持移动语义。有一个默认的移动构造函数和一个已实现的移动赋值操作符(如果两种成员类型都保证不抛出异常，则对应的noexcept条件是不抛出异常):\par
+该类支持移动语义。有一个默认的移动构造函数和一个已实现的移动赋值操作符(如果两种成员类型都保证不抛出异常，则对应的noexcept条件是不抛出异常):\par
 
 \begin{lstlisting}[caption={}]
 template<typename T1, typename T2>
@@ -83,7 +83,7 @@ p2: some value/some other value \\
 p3: some value/some other value
 \end{tcolorbox}
 
-但是，类型std::pair<>也可以通过处理通用/转发引用支持完美转发:\par
+但是，std::pair<>也可以通过处理通用/转发引用支持完美转发:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T1, typename T2>
@@ -94,7 +94,7 @@ struct pair {
 };
 \end{lstlisting}
 
-因此，我们可以在初始化pair时使用移动语义。例如:\par
+因此，可以在初始化pair时使用移动语义。例如:\par
 
 \begin{lstlisting}[caption={}]
 int val = 42;
@@ -121,7 +121,7 @@ constexpr pair::pair(U&& x, V&& y)
 }
 \end{lstlisting}
 
-注意，通用引用/转发引用还意味着，只要定义了相应的类型转换，就可以创建和赋值不同的类型对。例如:\par
+注意，通用引用/转发引用还意味着，只要定义了相应的类型转换，就可以创建和赋值不同的pair。例如:\par
 
 \begin{lstlisting}[caption={}]
 std::pair<const char*, std::string> p5{"answer", "is 42"};
@@ -138,9 +138,9 @@ p5: answer/ \\
 p6: answer/is 42
 \end{tcolorbox}
 
-初始化p6时，将p5的第一个成员(声明为const char*)转换为std::string，而在使用p5的第二个成员初始化p6的第二个成员时使用移动语义。\par
+初始化\textit{p6}时，将\textit{p5}的第一个成员(声明为const char*)转换为std::string，而在使用\textit{p5}的第二个成员初始化\textit{p6}的第二个成员时使用移动语义。\par
 
-最后，注意std::pair<>支持具有引用类型的成员。在这种情况下，当为这些成员使用std::move()时将应用特殊规则。参见basics/members.cpp获取完整的示例。\par
+最后，注意std::pair<>支持具有引用类型的成员。在这种情况下，当为这些成员使用\textit{std::move()}时将应用特殊规则。参见basics/members.cpp获取完整的示例。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{std::make\_pair()}
@@ -151,7 +151,7 @@ std::pair<>附带了一个方便的函数模板std::make\_pair<>()，用于创�
 auto p{std::make_pair(42, "hello")}; // creates std::pair<int, const char*>
 \end{lstlisting}
 
-std::make\_pair<>()是一个很好的例子，它演示了在rvalue和通用/转发引用中使用移动语义时必须考虑的另一件事。它的声明在不同版本的C++标准中有所不同:\par
+std::make\_pair<>()是一个很好的例子，它演示了在rvalue和通用/转发引用中使用移动语义时必须考虑的另一件事。它的声明在不同的C++标准中有所不同:\par
 
 \begin{itemize}
 	\item 第一个C++标准是C++98中，make\_pair<>()是在命名空间std中使用引用来声明的，以避免不必要的复制:
@@ -162,10 +162,10 @@ std::make\_pair<>()是一个很好的例子，它演示了在rvalue和通用/转
 		return pair<T1,T2>(a,b);
 	}
 	\end{lstlisting}
-	然而，当使用成对的字符串字面值或原始数组时，会导致了严重的问题。例如，当"hello"作为第二个实参传递时，对应形参b的类型成为对const char数组(const char(\&)[6])的引用。因此，char类型[6]被推导为T2类型，并用作第二个成员的类型。但是，不能使用数组初始化数组成员，因为不能复制数组。\par
+	然而，当使用成对的字符串字面值或原始数组时，会导致了严重的问题。例如，当"hello"作为第二个实参传递时，对应形参\textit{b}的类型成为对const char数组(const char(\&)[6])的引用。因此，char类型[6]推导为T2类型，并用作第二个成员的类型。但是，不能使用数组初始化数组成员，因为不能复制数组。\par
 	这种情况下，应该使用衰变的类型作为成员类型，这是按值传递参数时获得的类型(const char*表示字符串)。
 	
-	\item 因此，在C++03中，函数定义改为使用按值调用:
+	\item 因此，C++03中，函数定义改为使用按值调用:
 	\begin{lstlisting}[caption={}]
 	template<typename T1, typename T2>
 	pair<T1,T2> make_pair (T1 a, T2 b)
@@ -175,7 +175,7 @@ std::make\_pair<>()是一个很好的例子，它演示了在rvalue和通用/转
 	\end{lstlisting}
 	正如在问题解决方案的基本原理中看到的那样，“这似乎是对标准的建议小得多的更改，并且效率方面都被解决方案的优势抵消了。”
 	
-	\item 在C++11中，make\_pair()必须支持移动语义，这意味着参数必须成为通用/转发引用。同样，对于引用，参数的类型不会衰减。因此，定义变更如下:
+	\item C++11中，make\_pair()必须支持移动语义，这意味着参数必须成为通用/转发引用。同样，对于引用，参数的类型不会衰减。因此，定义变更如下:
 	\begin{lstlisting}[caption={}]
 	template<typename T1, typename T2>
 	constexpr pair<typename decay<T1>::type, typename decay<T2>::type>
@@ -197,7 +197,7 @@ std::make\_pair<>()是一个很好的例子，它演示了在rvalue和通用/转
 	\end{lstlisting}
 \end{itemize}
 
-真正的实现更加复杂，因为C++11:为了支持std::ref()和std::cref()，函数还使用了std::reference\_wrapper<>。\par
+真正的实现更加复杂，因为C++11:为了支持\textit{std::ref()}和\textit{std::cref()}，还使用了\textit{std::reference\_wrapper<>}。\par
 
 C++标准库以类似的方式在许多地方完美地转发参数，通常还会结合使用std::decay<>。\par
 
@@ -218,7 +218,7 @@ std::string s2 = *os; // OK, copies
 std::string s3 = std::move(*os); // OK, moves
 \end{lstlisting}
 
-注意，在最后一次调用之后，os仍然有一个字符串值，但与通常的已移动对象一样，这个值是未定义的。因此，只要不对其值做任何假设，就可以使用它。甚至可以在那里赋一个新的字符串值。\par
+注意，在最后一次调用之后，\textit{os}仍然有一个字符串值，但与通常的已移动对象一样，这个值未定义。因此，只要不对其值做任何假设，就可以使用它。甚至可以在那里赋一个新的字符串值。\par
 
 还请注意，有些重载确保临时optional可移动。考虑一个返回可选字符串的函数:\par
 
@@ -226,7 +226,7 @@ std::string s3 = std::move(*os); // OK, moves
 std::optional<std::string> func();
 \end{lstlisting}
 
-在这种情况下，定义了移动值:\par
+这种情况下，定义了移动值:\par
 
 \begin{lstlisting}[caption={}]
 std::string s4 = func().value(); // OK, moves
@@ -253,7 +253,7 @@ namespace std {
 }
 \end{lstlisting}
 
-通过使用引用限定符，类可以在对rvalue(临时对象或标记为std::move()的对象)调用操作时返回移动值。:\par
+通过使用引用限定符，类可以在对rvalue(临时对象或标记为\textit{std::move()}的对象)调用操作时返回移动值。:\par
 
 \begin{lstlisting}[caption={}]
 std::vector<std::string> coll;
@@ -262,7 +262,7 @@ std::optional<std::string> optStr;
 coll.push_back(std::move(optStr).value()); // OK, moves from member into coll
 \end{lstlisting}
 
-注意，std::optional<>是C++标准库中少数使用const ravlue引用的类型。原因是std::optional<>是一个包装器类型，它希望确保操作正确，即使const对象标记为std::move()，并且所包含的类型为const rvalue引用提供了特殊行为。\par
+注意，std::optional<>是C++标准库中少数使用\textit{const} ravlue引用的类型。原因是std::optional<>是一个包装器类型，它希望确保操作正确，即使\textit{const}对象标记为\textit{std::move()}，并且所包含的类型为const rvalue引用提供了特殊行为。\par
 
 
 

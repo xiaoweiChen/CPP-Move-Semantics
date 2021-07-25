@@ -1,15 +1,15 @@
-字符串是可以分配内存来保存其值的对象。因此，可以对它们使用移动语义。\par
+字符串是可以分配内存来保存其值的对象。因此，可以对其使用移动语义。\par
 
 书中已经有了几个关于字符串如何支持移动语义的例子:\par
 
 \begin{itemize}
-	\item 将字符串移动到一个vector中
-	\item 为字符串实现一个移动构造函数
+	\item 将字符串移动到某个vector中
+	\item 为字符串实现移动构造函数
 	\item 成员初始化字符串
-	\item 在循环中读取字符串，并在move()之后使用它们
+	\item 循环中读取字符串，并在\textit{move()}之后使用它们
 \end{itemize}
 
-本节中，我们将更详细地介绍移动语义对字符串的影响。\par
+本节中，将更详细地介绍移动语义对字符串的影响。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{15.1.1 字符串分配和容量}
@@ -50,7 +50,7 @@ int main()
 }
 \end{lstlisting}
 
-程序中，首先可以看到，由于小字符串优化(SSO)，通常即使是空字符串也有容纳某些字符的能力，这通常为字符串本身的值保留15或22个字节。除了SSO的大小之外，字符串在堆上分配内存，堆至少有存储值所需的大小。因此：\par
+代码中，由于小字符串优化(SSO)，即使是空字符串也有容纳某些字符的能力，这通常为字符串本身的值保留15或22个字节。除了SSO的大小之外，字符串在堆上分配内存，堆至少有存储值所需的大小。因此：\par
 
 \begin{lstlisting}[caption={}]
 std::string s0;
@@ -58,7 +58,7 @@ std::string s1{"short"};
 std::string s2{"a string with an extraordinarily long value"};
 \end{lstlisting}
 
-我们可能会得到如下输出:\par
+可能会得到如下输出:\par
 
 \begin{itemize}
 	\item 平台 A:
@@ -75,16 +75,16 @@ std::string s2{"a string with an extraordinarily long value"};
 	\end{tcolorbox}	
 \end{itemize}
 
-这里，两个平台似乎都支持SSO(最多15或22个字符)，当只需要43个字符的内存时，第二个平台为47个字符分配内存。\par
+这里，两个平台都支持SSO(最多15或22个字符)，当只需要43个字符的内存时，第二个平台为47个字符分配内存。\par
 
-在所有平台上，已移动字符串通常为空，即使值没有存储在外部分配的内存中(因此我们必须复制所有字符)。\par
+所有平台上，已移动字符串通常为空，即使值没有存储在外部分配的内存中(因此我们必须复制所有字符)。\par
 
 \begin{lstlisting}[caption={}]
 std::string s3{std::move(s1)};
 std::string s4{std::move(s2)};
 \end{lstlisting}
 
-我们通常会得到这样的结果:\par
+会得到这样的结果:\par
 
 \begin{itemize}
 	\item 平台 A:
@@ -103,7 +103,7 @@ std::string s4{std::move(s2)};
 	\end{tcolorbox}	
 \end{itemize}
 
-注意，这里不能保证s1变成空的。通常，C++标准库只保证从字符串中移动的字符串处于有效但未指定的状态，这意味着s1的值仍然可以是“short”，甚至是其他值。\par
+注意，这里不能保证\textit{s1}变成空的。C++标准库只保证从字符串中移动的字符串处于有效但未指定的状态，这意味着\textit{s1}的值仍然可以是“short”，或是其他值。\par
 
 移动时分配不同的字符串值可能会缩小容量。示例程序的最后两个步骤基本上执行:\par
 
@@ -113,7 +113,7 @@ std::string s5{"quite a reasonable value"};
 s4 = std::move(s5);
 \end{lstlisting}
 
-你可以在实践中找到以下输出:\par
+在实践中会有以下输出:\par
 
 \begin{itemize}
 	\item 内存交换:
@@ -132,7 +132,7 @@ s4 = std::move(s5);
 	\end{tcolorbox}	
 \end{itemize}
 
-如您所见，s4的容量通常会缩小，有时缩小到目标的容量，有时缩小到空字符串的最小容量。然而，两者都不能完全保证。\par
+\textit{s4}的容量通常会缩小，有时缩小到目标的容量，有时缩小到空字符串的最小容量。然而，两者都不能完全保证。\par
 
 
 

@@ -1,13 +1,13 @@
-容器通常是必须分配内存来保存其元素的对象。因此，可以从使用移动语义中获益。但有一个例外:std::array<>不在堆上分配内存，这意味着对std::array<>应该使用特殊规则。\par
+容器通常是必须分配内存来保存其元素的对象。因此，可以从使用移动语义中获益。但有例外:std::array<>不在堆上分配内存，这意味着对std::array<>应该使用特殊规则。\par
 
-书中已经有了几个关于容器如何支持移动语义的例子。在最初的例子中，我们看到了对以下移动语义的支持:\par
+书中已经有了几个关于容器如何支持移动语义的例子。最初的例子中，了解了支持的移动语义:\par
 
 \begin{itemize}
-	\item 通过重载push\_back()，C++标准支持移动语义来插入新元素。
+	\item 通过重载\textit{push\_back()}，C++标准支持移动语义来插入新元素。
 	\item 通过提供移动构造函数和移动赋值操作符，降低复制临时对象(比如返回值)的成本。
 \end{itemize}
 
-这是典型的。执行以下操作时，所有容器都支持移动语义:\par
+执行以下操作时，所有容器都支持移动语义:\par
 
 \begin{itemize}
 	\item 复制容器
@@ -20,7 +20,7 @@
 \hspace*{\fill} \par %插入空行
 \textbf{15.2.1 基本移动支持容器整体}
 
-所有容器都定义了一个移动构造函数和移动赋值操作符，以支持未命名临时对象和std::move()标记对象的移动语义。\par
+所有容器都定义了一个移动构造函数和移动赋值操作符，以支持未命名临时对象和\textit{std::move()}标记对象的移动语义。\par
 
 例如，std::list<>的声明如下:\par
 
@@ -51,7 +51,7 @@ std::list<std::string> v;
 v = createAndInsert(); // move assignment
 \end{lstlisting}
 
-但请注意，我们有 附加的要求和保证，这适用于除std::array<>之外的所有容器的已送构造函数和移动赋值操作符。这些要求和保证意味着已移动的容器移动通常是空的。\par
+但请注意，这里有附加的要求和保证，这适用于除std::array<>之外的所有容器的移动构造函数和移动赋值操作符。这些要求和保证意味着已移动的容器移动是空的。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{容器移动构造函数的保证}
@@ -63,11 +63,11 @@ ContainerType cont1{ ... };
 ContainerType cont2{std::move(cont1)}; // move the container
 \end{lstlisting}
 
-C++标准规定了常量复杂度。这意味着移动的持续时间不取决于元素的数量。\par
+C++标准规定了常量复杂度，移动的持续时间不取决于元素的数量。\par
 
-有了这种保证，实现者没有其他选择，只能从源对象cont1整体窃取元素的内存到目标对象cont2，使源对象cont1处于初始/空状态。\par
+有了这种保证，实现者没有其他选择，只能从源对象\textit{cont1}整体窃取元素的内存到目标对象\textit{cont2}，使源对象\textit{cont1}处于初始/空状态。\par
 
-您可能会认为移动构造函数也可以在源对象中创建一个新值，但这没有多大意义，因为这只会使操作变慢。\par
+可能会认为移动构造函数也可以在源对象中创建新值，但这没有多大意义，因为这只会使操作变慢。\par
 
 对于vector，甚至间接禁止从已移动对象中获取值，因为std::vector<>的移动构造函数不会抛出异常:\par
 
@@ -82,11 +82,11 @@ class vector {
 };
 \end{lstlisting}
 
-总之，在移动构造函数中使用容器作为源时，我们有以下保证:\par
+总之，在移动构造函数中使用容器作为源时，有以下保证:\par
 
 \begin{itemize}
 	\item 对于vector，本质上要求已移动的容器为空。
-	\item 对于其他容器(除了std::array<>)，不是严格要求为空，但实现为其他东西也没什么意义。
+	\item 对于其他容器(除了std::array<>)，不是严格要求为空，但实现为其他也没什么意义。
 \end{itemize}
 
 \hspace*{\fill} \par %插入空行
@@ -99,21 +99,21 @@ ContainerType cont1{ ... }, cont2{ ... };
 cont2 = std::move(cont1); // move assign the container
 \end{lstlisting}
 
-C++标准保证此操作会覆盖或销毁目标对象cont2的每个元素。这保证了目标容器dest2的元素在条目时拥有的所有资源都会进行释放。因此，只有两种方法来实现移动赋值:\par
+C++标准保证此操作会覆盖或销毁目标对象\textit{cont2}的每个元素。这保证了目标容器\textit{dest2}的元素在条目时拥有的所有资源都会进行释放。因此，只有两种方法来实现移动赋值:\par
 
 \begin{itemize}
 	\item 销毁旧的元素，并将源的全部内容移动到目标(即，将指向内存的指针从源移动到目标)。
-	\item 一个元素一个元素地从源cont1移动到目标cont2，并销毁目标中未覆盖的所有剩余元素。
+	\item 一个元素一个元素地从源\textit{cont1}移动到目标\textit{cont2}，并销毁目标中未覆盖的所有剩余元素。
 \end{itemize}
 
-这两种方法的复制度都线性的，但在这个定义中，仅仅交换源和目标的内容是不允许的。\par
+这两种方法的复制度都线性的，在这个定义中，不允许仅交换源和目标的内容。\par
 
 然而，自C++17以来，所有容器都保证在内存可互换时不会抛出异常。例如:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T, typename Allocator = allocator<T>>
 class list {
-	public:
+public:
 	...
 	list& operator=(list&&)
 	noexcept(allocator_traits<Allocator>::is_always_equal::value);
@@ -121,16 +121,16 @@ class list {
 };
 \end{lstlisting}
 
-noexcept对赋值操作符的保证，排除了将移动赋值实现为逐个元素移动的第二种方法。通常情况下，移动操作可能会抛出异常。只有销毁旧元素的实现才不会抛出。因此，当内存可以互换时，必须使用第一种方法来实现移动赋值操作符。\par
+noexcept对赋值操作符的保证，排除了将移动赋值实现为逐个元素移动的第二种方法。移动操作可能会抛出异常，只有销毁旧元素的实现才不会抛出。因此，当内存可以互换时，必须使用第一种方法来实现移动赋值操作符。\par
 
-总之，在移动赋值中使用容器作为源后，实际上有以下保证:\par
+总之，移动赋值中使用容器作为源，实际上有以下保证:\par
 
 \begin{itemize}
-	\item 如果内存是可互换的(在使用默认标准分配器时尤其如此)，则基本上要求从移动的容器为空。这适用于除std::array<>之外的所有容器。
+	\item 如果内存是可互换的(使用默认标准分配器时尤其如此)，则基本上要求从移动的容器为空。这适用于除std::array<>之外的所有容器。
 	\item 否则，移动的容器处于有效但未定义的状态。
 \end{itemize}
 
-但请注意，在给自己移动赋值之后，容器总是有一个未定义但有效的状态。\par
+但请注意，在给自己移动赋值之后，容器总处于未定义但有效的状态。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{15.2.2 Insert和Emplace函数}
@@ -140,12 +140,12 @@ noexcept对赋值操作符的保证，排除了将移动赋值实现为逐个元
 \hspace*{\fill} \par %插入空行
 \textbf{Insert函数}
 
-例如，vector通过push\_back()的两种不同实现来支持移动语义:\par
+例如，vector通过\textit{push\_back()}的两种不同实现来支持移动语义:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T, typename Allocator = allocator<T>>
 class vector {
-	public:
+public:
 	...
 	
 	// insert a copy of elem:
@@ -157,7 +157,7 @@ class vector {
 };
 \end{lstlisting}
 
-rvalue的push\_back()函数用std::move()传递传递的元素，这样就调用了元素类型的移动构造函数，而不是复制构造函数。\par
+rvalue的\textit{push\_back()}函数用\textit{std::move()}传递传递的元素，这样就调用了元素类型的移动构造函数，而不是复制构造函数。\par
 
 同样，所有容器都有相应的重载。例如:\par
 
@@ -176,11 +176,11 @@ class map {
 \hspace*{\fill} \par %插入空行
 \textbf{Emplace函数}
 
-从C++11开始，容器也提供了Emplace函数(比如为向量提供了emplace\_back())。可以传递多个参数来直接在容器中初始化新元素，而不是传递单个元素类型参数(或可转换为元素类型)。这样你就可以保存副本或移动。\par
+从C++11开始，容器也提供了Emplace函数(比如为向量提供了\textit{emplace\_back()})。可以传递多个参数来直接在容器中初始化新元素，而不是传递单个元素类型参数(或可转换为元素类型)。这样就可以保存副本或移动。\par
 
 注意，即使这样，容器也可以通过为构造函数的初始参数支持移动语义，并从移动语义中获益。\par
 
-像emplace\_back()这样的函数可以使用完美转发来避免创建所传递参数的副本。例如，对于std::vector<>，emplace\_back()成员函数的定义如下:\par
+像\textit{emplace\_back()}这样的函数可以使用完美转发来避免创建所传递参数的副本。例如，对于std::vector<>，emplace\_back()成员函数的定义如下:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T, typename Allocator = allocator<T>>
@@ -199,12 +199,12 @@ class vector {
 };
 \end{lstlisting}
 
-在内部，vector使用完全转发的参数初始化新元素。\par
+在vector内部使用完全转发的参数初始化新元素。\par
 
 \hspace*{\fill} \par %插入空行
 \textbf{15.2.3 std::array<>的移动语义}
 
-array<>是唯一一个没有在堆上分配内存的容器。实际上，是作为带有数组成员的模板化C数据结构实现的:\par
+array<>是唯一没有在堆上分配内存的容器。实际上，是通过带有数组成员的模板化C数据结构实现的:\par
 
 \begin{lstlisting}[caption={}]
 template<typename T, size_t N>
@@ -214,7 +214,7 @@ struct array {
 };
 \end{lstlisting}
 
-因此，我们不能以移动指针到内部内存的方式来实现移动操作。\par
+因此，不能以移动指针到内部内存的方式来实现移动操作。\par
 
 因此，std::array<>有两个保证:\par
 
@@ -234,7 +234,7 @@ auto arr3{std::move(arr)}; // still copies all double elements/values
 
 对于所有其他容器，后者将只移动指向新对象的内部指针，这是一个成本非常低的操作。\par
 
-但是，如果移动元素比复制元素成本还要低，那么移动数组仍然比复制要好。例如:\par
+但是，如果移动元素比复制元素成本还要低，那么移动仍然比复制要好。例如:\par
 
 \begin{lstlisting}[caption={}]
 std::array<std::string, 1000> arr;
@@ -245,7 +245,7 @@ auto arr3{std::move(arr)}; // moves string by string
 
 如果字符串分配堆内存(即，如果使用小字符串优化(SSO)，则有一个显著的大小)，那么移动字符串数组通常会更快。\par
 
-可以通过程序lib/contmove.cpp看到这一点，它检查复制和移动不同元素类型(双精度、小字符串和大字符串)的数组和vector之间的区别。请注意，在平台上，因为生成的代码具有不同的优化，复制和移动双精度数组或小字符串之间可能仍然存在微小的性能差异。\par
+可以通过lib/contmove.cpp看到这一点，它检查复制和移动不同元素类型(双精度、小字符串和大字符串)的数组和vector之间的区别。请注意，在不同平台上，因为生成的代码具有不同的优化，复制和移动双精度数组或小字符串之间可能存在微小的性能差异。\par
 
 
 
